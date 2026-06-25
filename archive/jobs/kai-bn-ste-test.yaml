@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kai-bn-ste
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 21600    # 6h safety cap (5-epoch bounded test)
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: train
+        image: tensorflow/tensorflow:2.11.1-gpu
+        command: ["bash", "-c"]
+        args:
+        - |
+          set -eo pipefail
+          export MPLBACKEND=Agg
+          CODE=/data/BNJetTag
+          OUT=/data/outputs/qk-ste
+          mkdir -p "$OUT/bitnet" "$OUT/v1/bitnet"
+          echo "[setup] $(date) deps"
+          apt-get update -qq && apt-get install -y -qq graphviz
+          pip install -q qkeras==0.9.0 "tensorflow==2.11.1" "matplotlib<3.8" pandas seaborn mplhep pydot scikit-learn h5py wandb
+          ( grep -rl " | " --include="*.py" "$CODE" 2>/dev/null | while read f; do grep -q "from __future__ import annotations" "$f" || sed -i '1i from __future__ import annotations' "$f"; done ) || true
+          nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || true
+          export PYTHONPATH="$CODE:$PYTHONPATH"
+          export WANDB_PROJECT=bnjettag-bitnet
+          export WANDB_RUN_NAME=ste-test-D32-L2-FFN64
+          export BN_D_MODEL=32 BN_N_HEADS=4 BN_N_LAYERS=2 BN_FFN_DIM=64 BN_EPOCHS=5
+          echo "[train] $(date) SUSPECT-1 STE variant  D=32 H=4 L=2 FFN=64  EPOCHS=5"
+          cd "$OUT"
+          python -u "$CODE/qkerasModel_ste.py" \
+            /data/bnjet/train_merged/merged_trainPart.h5 \
+            /data/bnjet/QCD_Pt15To3000_Flat_PU200/Bkg_train.h5 \
+            /data/bnjet/train_merged/merged_trainJet.h5 \
+            /data/bnjet/QCD_Pt15To3000_Flat_PU200/Bkg_trainJets.h5 \
+            2>&1 | tee "$OUT/train_ste.log"
+          echo "[done] $(date) ste-test"
+        env:
+        - name: WANDB_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kai-wandb
+              key: WANDB_API_KEY
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+            memory: 24Gi
+            cpu: "4"
+          requests:
+            nvidia.com/gpu: "1"
+            memory: 24Gi
+            cpu: "4"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: kai-data

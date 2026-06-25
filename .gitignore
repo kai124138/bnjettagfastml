@@ -1,0 +1,13 @@
+# secrets — never commit
+wandb-api-key.txt
+.netrc
+
+# local virtualenv
+.venv-plots/
+
+# python caches
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

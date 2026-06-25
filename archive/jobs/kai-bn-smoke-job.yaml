@@ -1,0 +1,65 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kai-bn-smoke
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 5400   # 90 min safety cap for the smoke test
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: smoke
+        image: tensorflow/tensorflow:2.11.1-gpu
+        command: ["bash", "-c"]
+        args:
+        - |
+          set -eo pipefail
+          export MPLBACKEND=Agg
+          CODE=/data/BNJetTag
+          OUT=/data/outputs/qk-smoke
+          mkdir -p "$OUT/bitnet" "$OUT/v1/bitnet"
+          echo "[setup] $(date) installing deps"
+          apt-get update -qq && apt-get install -y -qq graphviz
+          pip install -q qkeras==0.9.0 "tensorflow==2.11.1" "matplotlib<3.8" pandas seaborn mplhep pydot scikit-learn h5py wandb
+          # py3.10 -> 3.8 type-hint compat (idempotent; no-op if not needed)
+          ( grep -rl " | " --include="*.py" "$CODE" 2>/dev/null | while read f; do grep -q "from __future__ import annotations" "$f" || sed -i '1i from __future__ import annotations' "$f"; done ) || true
+          nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || true
+          export PYTHONPATH="$CODE:$PYTHONPATH"
+          echo "[sanity] $(date) building MAX config (D=256 H=8 L=8 FFN=1024) - no data"
+          cd "$OUT"
+          BN_D_MODEL=256 BN_N_HEADS=8 BN_N_LAYERS=8 BN_FFN_DIM=1024 \
+            python -u "$CODE/qkerasModel.py" --sanity
+          echo "[fit] $(date) 1-epoch baseline fit on real data + W&B"
+          export WANDB_PROJECT=bnjettag-bitnet
+          export WANDB_RUN_NAME=smoke-1epoch
+          BN_EPOCHS=1 \
+            python -u "$CODE/qkerasModel.py" \
+              /data/bnjet/train_merged/merged_trainPart.h5 \
+              /data/bnjet/QCD_Pt15To3000_Flat_PU200/Bkg_train.h5 \
+              /data/bnjet/train_merged/merged_trainJet.h5 \
+              /data/bnjet/QCD_Pt15To3000_Flat_PU200/Bkg_trainJets.h5
+          echo "[done] $(date) smoke complete; outputs in $OUT"
+          ls -la "$OUT" "$OUT/bitnet" "$OUT/v1/bitnet"
+        env:
+        - name: WANDB_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kai-wandb
+              key: WANDB_API_KEY
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+            memory: 24Gi
+            cpu: "4"
+          requests:
+            nvidia.com/gpu: "1"
+            memory: 16Gi
+            cpu: "2"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: kai-data

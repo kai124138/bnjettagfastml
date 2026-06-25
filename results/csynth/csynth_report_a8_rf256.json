@@ -1,0 +1,35 @@
+{
+  "row": {
+    "precision": "A8",
+    "BRAM_18K": "64",
+    "DSP": "0",
+    "FF": "251331",
+    "LUT": "440882",
+    "LatencyCyclesWorst": "520",
+    "LatencyCyclesBest": "518",
+    "IntervalII": "256",
+    "ReuseFactor": 256,
+    "part": "xcvu13p-flga2577-2-e",
+    "clock_ns": 2.5
+  },
+  "raw_report": {
+    "CSynthesisReport": {
+      "TargetClockPeriod": "2.50",
+      "EstimatedClockPeriod": "1.760",
+      "BestLatency": "518",
+      "WorstLatency": "520",
+      "IntervalMin": "256",
+      "IntervalMax": "256",
+      "BRAM_18K": "64",
+      "FF": "251331",
+      "LUT": "440882",
+      "DSP": "0",
+      "URAM": "0",
+      "AvailableBRAM_18K": "5376",
+      "AvailableDSP": "12288",
+      "AvailableFF": "3456000",
+      "AvailableLUT": "1728000",
+      "AvailableURAM": "1280"
+    }
+  }
+}
