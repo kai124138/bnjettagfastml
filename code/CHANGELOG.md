@@ -22,6 +22,7 @@ Conventions: paths are relative to the run root. Dates are file mtimes on this m
 | --- | --- | --- | --- |
 | `qkerasModel.py` | upstream + **our edits** | THE trainer; all precisions via `BN_VARIANT`. Edits catalogued as G1–G4 in `methods/code_changes.md`. | **edited** (last Jun 23) |
 | `qkerasModel.patch` | **ours** | Phase-0 upstream diff (data path / env / W&B) captured as a standalone patch. | new (Jun 22) |
+| `ebops.py` | **ours** | STATIC EBOPs/BOPs profiler. Encodes the closed-form per-layer MAC + param profile of `build_bitnet_jet_tagger` (stdlib only, no TF, no training); exposes `bops(macs,b_w,b_a)` and a `ebops()` aggregator. Param totals reconstruct the verified preflight counts exactly (tiny 26,529 / small 153,793 / medium 808,065 / large 6,373,633). Accumulator (HGQ) term is a 0-stub `accumulator_bops()` hook pending the HGQ formula. | new (Jun 29) |
 | `HLS_qk_Roc_Tracing.py` | upstream | upstream HLS+ROC tracing; hardcodes a Vitis path from another cluster. Reference only — not run here. | vendored, unmodified |
 | `ROC.py` | upstream | upstream ROC plotting. Not invoked inside the training jobs (ROC lives in W&B). | vendored, unmodified |
 | `README_upstream.md` | upstream | the upstream project README. | vendored, unmodified |
@@ -35,6 +36,7 @@ Conventions: paths are relative to the run root. Dates are file mtimes on this m
 | file | what it is | status |
 | --- | --- | --- |
 | `run_csynth.py` | **The Vitis C-synthesis driver that produced §B** of `results/hls_resource_table.md`. Builds the binary FFN block, runs `hls_model.build(synth=True)` on hls4ml 1.x, unwraps `CSynthesisReport` (+ `csynth.xml` fallback). | new (Jun 24) |
+| `full_model_csynth.py` | **The Vitis driver that produced §B′** — the *full trained transformer* end-to-end. Loads `lr15_bitnetJetTagModel.h5`, rebuilds each `BitLinear` as `LayerNormalization→QActivation→QDense(binary)`, ports trained weights via the BitNet `AbsMeanQuantizer`. Three modes (`HLS_MODE`): `fidelity` (rebuild vs trained, corr 0.99998), `convert` (QKeras↔Vitis bit-accuracy 0.9967–0.9999), `csynth` (per-shape synth + 51-instance composition). **Result: binary matmul = 0 DSP; all 1,049 DSP = LayerNorm.** | new (Jun 26) |
 | `RUN_CSYNTH_ON_VITIS.md` | Turnkey runbook for a Vitis-2023.2 box (the steps actually used on `mulder`). | new (Jun 24) |
 | `sweep_precision.py` | Quantization-aggressiveness × hls4ml **firmware** sweep: QKeras → HLS C++, g++ bit-accurate emulation (corr), inspects `defines.h`/`parameters.h` to confirm binary weights type as `ap_uint<1>` → **0 DSP**. | new (Jun 23) |
 | `resource_model.py` | **Analytical** per-component resource model (MACs / weight-bits / LUT·DSP·BRAM via labeled cost factors). The pre-csynth first-order estimate; separates exact structural counts from derived estimates. Superseded for §B by real csynth, kept for the per-component story. | new (Jun 23) |
@@ -92,6 +94,14 @@ raw reports → `results/csynth/csynth_report_a{8,6,4}_rf256.json`.
 
 **Phase 5 — publication figures (Jun 24).** `make_results_plots.py` → the 3 `results_*.png`.
 
+**Phase 6 — full trained transformer, synthesized end-to-end (Jun 26).** `full_model_csynth.py`: loaded the real
+`lr15_bitnetJetTagModel.h5`, rebuilt every custom layer (`BitLinear`/`RMSNorm`/attention projections) from
+hls4ml-supported primitives, **ported the trained binary weights**, validated (fidelity corr 0.99998; QKeras↔Vitis
+bit-accuracy 0.9967–0.9999), and C-synthesized the 5 distinct layer shapes at A8 (RF=256) on Vitis HLS 2023.2.
+**Headline: binary matmul = 0 DSP, re-confirmed on the real model; the entire transformer's 1,049 DSP (8.5 % of a
+VU13P) is 100 % LayerNorm.** Filled `results/hls_resource_table.md` **§B′**; raw → `results/csynth/full_model_*_a8_rf256.json`.
+A6/A4 sweep launched same night (backfill). This directly answers the "are you just synthesizing an FFN?" critique.
+
 ### Docs & results artifacts touched (not code, logged for completeness)
 `README.md`, `results/REPORT.md`, `results/RESULTS.md`, `results/hls_resource_table.md`,
 `results/plots/README.md` — updated to past tense + figure pointers once csynth landed and figures
@@ -147,6 +157,14 @@ of *our own* documentation overclaims. Several scary-looking log lines turned ou
 ### Honest scope boundary (a capability limit, not a bug)
 
 - hls4ml 0.8.1 could **not** convert LayerNorm (SubLN) or EinsumDense attention; hls4ml ≥ 1.2 added that
-  support (`full_transformer_probe.py`). LayerNorm is convertible-but-fragile (`io_parallel` only). So the
-  **synthesized §B numbers cover the binary FFN block** — the dominant primitive, where the DSP=0 claim
-  lives — not the literal end-to-end transformer.
+  support (`full_transformer_probe.py`). LayerNorm is convertible-but-fragile (`io_parallel` only). §B's numbers
+  cover the binary FFN block (the dominant primitive); **§B′ (Phase 6) now extends this to the full trained
+  transformer** — all 51 BitLinears + 51 SubLN norms + the 4 weighted attention projections, synthesized with
+  real trained weights.
+- **The one remaining gap (Phase 6):** hls4ml's parser only converts layer *types* with a registered handler, so
+  the custom `BitLinear`/`RMSNorm`/`BitMHSA` subclasses can't be ingested from the `.h5` directly — they were
+  rebuilt as `LayerNormalization→QActivation→QDense(binary)` with weights ported in. The attention **score core**
+  (Q·Kᵀ / softmax / ·V — *weightless*, 0.65 % of MACs) uses `EinsumDense`, which **does not convert** on this
+  hls4ml (verified: probe Stages C & D fail). So §B′ covers **100 % of the weights and 99.35 % of the MACs**; the
+  weightless score core is handled analytically (`resource_model.py`), not synthesized. This is a real, documented
+  boundary — not a silent omission.

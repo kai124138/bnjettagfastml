@@ -11,3 +11,7 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# personal learning notes — never commit (kept outside the repo on purpose)
+LEARN/
+**/LEARN/

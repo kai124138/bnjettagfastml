@@ -1,0 +1,76 @@
+[
+  {
+    "precision": "A8",
+    "n_bitlinear_instances": 51,
+    "full_model_total": {
+      "LUT": 8912618,
+      "FF": 8712392,
+      "DSP": 1049,
+      "BRAM_18K": 778
+    },
+    "breakdown": [
+      {
+        "shape": "14->256",
+        "rep": "input_proj",
+        "members": [
+          "input_proj"
+        ],
+        "instances": 1,
+        "per_instance_LUT": 25897,
+        "per_instance_FF": 48605,
+        "per_instance_DSP": 11
+      },
+      {
+        "shape": "256->256",
+        "rep": "attn_Wq",
+        "members": [
+          "attn_Wq",
+          "attn_Wk",
+          "attn_Wv",
+          "attn_Wo",
+          "head_fc1"
+        ],
+        "instances": 33,
+        "per_instance_LUT": 119659,
+        "per_instance_FF": 117083,
+        "per_instance_DSP": 15
+      },
+      {
+        "shape": "256->1024",
+        "rep": "ffn_fc1",
+        "members": [
+          "ffn_fc1"
+        ],
+        "instances": 8,
+        "per_instance_LUT": 174187,
+        "per_instance_FF": 163931,
+        "per_instance_DSP": 15
+      },
+      {
+        "shape": "1024->256",
+        "rep": "ffn_fc2",
+        "members": [
+          "ffn_fc2"
+        ],
+        "instances": 8,
+        "per_instance_LUT": 430366,
+        "per_instance_FF": 423384,
+        "per_instance_DSP": 51
+      },
+      {
+        "shape": "256->1",
+        "rep": "head_fc2",
+        "members": [
+          "head_fc2"
+        ],
+        "instances": 1,
+        "per_instance_LUT": 101550,
+        "per_instance_FF": 101528,
+        "per_instance_DSP": 15
+      }
+    ],
+    "ReuseFactor": 256,
+    "part": "xcvu13p-flga2577-2-e",
+    "note": "Sum over 51 BitLinear layers; DSP=0 structural (binary weights -> ap_uint<1>). Attention QK^T/softmax/AV score core (0.65% of MACs, no weights) not included (EinsumDense unsupported on this hls4ml; handled in resource_model.log)."
+  }
+]

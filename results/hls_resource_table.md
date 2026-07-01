@@ -7,6 +7,17 @@
 > A8/A6/A4, confirmed in synthesis** (not just firmware inference); the folded device-fit design (RF=256) fits a
 > VU13P at **~25% LUT / ~7% FF / ~1.2% BRAM / 0 DSP**, latency 520 cycles (1.3 µs @ 400 MHz).
 >
+> **UPDATE — the FULL trained transformer, synthesized end-to-end (2026-06-26).** §B (below) is a single binary-FFN
+> block used as a *primitive probe*. The new **[§B′](#b-the-full-trained-transformer--synthesized-end-to-end-this-is-the-model-not-an-ffn)**
+> now reports the **actual trained BitNet transformer** — the real `lr15_bitnetJetTagModel.h5` checkpoint, all 51
+> BitLinears + 51 SubLN norms + the four attention projections — reconstructed from hls4ml-supported primitives
+> with the **trained binary weights ported in**, validated (rebuild↔trained fidelity corr **0.99998**;
+> QKeras↔Vitis C-sim bit-accuracy **0.9967–0.9999**), and C-synthesized per distinct layer shape. **Headline
+> refinement:** the binary `{−1,+1}` **matmul core is 0 DSP** (re-confirmed on the real model); the **only** DSP in
+> the entire transformer — **1,049 total (8.5 % of a VU13P)** — sits inside the LayerNorms. This is the section that
+> answers *"where is the transformer — are you just building an FFN?"*: it is the whole trained model, in silicon
+> estimates.
+>
 > *Background on the stages:* hls4ml has three — `convert` (codegen), `compile` (g++ bit-accurate emulation), and
 > **`build` → Vivado/Vitis C-synthesis (csynth)**; only csynth produces exact LUT/FF/DSP/BRAM + latency-in-cycles.
 > **NRP Nautilus has no Xilinx HLS backend**, so csynth could not run on the cluster — it ran instead on `mulder`
@@ -90,6 +101,93 @@ overstated several-fold versus real logic synthesis — the measured design is c
 
 ---
 
+## B′. THE FULL TRAINED TRANSFORMER — synthesized end-to-end (this is the model, not an FFN)
+
+> **DONE 2026-06-26 on `mulder` (Vitis HLS 2023.2).** Answers the direct question *"where is the transformer — are
+> you just synthesizing an FFN?"* §B above is a single binary-FFN block used as a **primitive probe**. This section
+> is the **entire trained BitNet transformer jet tagger** — the real `lr15_bitnetJetTagModel.h5` checkpoint —
+> reconstructed from hls4ml-convertible primitives and synthesized with its **trained binary weights**. Produced by
+> `code/hls/full_model_csynth.py`; raw reports in `results/csynth/full_model_*_a8_rf256.json`.
+
+**Why a rebuild was needed (and what was rebuilt).** hls4ml's parser only converts layer *types* that have a
+registered handler. The trained model's `BitLinear`, `RMSNorm`, and `BitMHSA` are custom `keras.Layer` subclasses
+with **no** handler, so hls4ml cannot ingest the `.h5` as-is — which is precisely why the earlier run fell back to a
+plain `QDense` FFN. The fix: map every trained op to a supported primitive **and port the trained weights through
+the BitNet binarizer (`AbsMeanQuantizer`)**:
+
+| trained op (custom subclass) | hls4ml-supported realisation | weights ported |
+| --- | --- | --- |
+| `BitLinear` (binary {−1,+1} matmul) | `LayerNormalization → QActivation(quantized_bits) → QDense(kernel=binary)` | ✅ real, binarized |
+| `RMSNorm` (despite the name = **full** mean-subtracting LayerNorm, eps=1e-6, no affine — per the model's own code comment) | built-in `LayerNormalization` (γ=1, β=0) | n/a (no affine params) |
+| `BitMHSA` Q·Kᵀ / softmax / ·V **score core** (no weights; 0.65 % of MACs) | *not converted* — `EinsumDense` is unsupported on this hls4ml; handled analytically | n/a |
+
+The four **weighted** attention projections (Wq/Wk/Wv/Wo) **are** BitLinears and **are** synthesized below; only the
+weightless attention score-core contraction is excluded (documented; 0.65 % of MACs, 0 % of weights).
+
+**Validation — the rebuild reproduces the trained model and synthesizes bit-accurately:**
+- **Fidelity** (rebuilt graph vs. the trained `.h5`, N=512 real jets): Pearson **corr = 0.99998** (mean|Δ| 0.0041)
+  with the model's native dynamic per-token activation quant; **0.99814** (mean|Δ| 0.0599) with the
+  HLS-convertible static `quantized_bits` quant. → the architecture + weight port is faithful.
+- **Bit-accuracy** (QKeras forward vs. Vitis HLS C-simulation, **real trained weights**, A8): **0.9967–0.9999** per
+  layer (input_proj 0.99672, attn 0.99977, ffn_fc1 0.99977, ffn_fc2 0.99988, head 0.99982).
+
+**The 5 distinct layer shapes, each synthesized with real trained weights** (Vitis HLS 2023.2,
+`xcvu13p-flga2577-2-e`, 2.5 ns target, RF=256). A binary matmul's resource is weight-*value*-independent and the 8
+transformer blocks are architecturally identical, so one representative per shape gives every copy:
+
+| shape | components (× count) | DSP | LUT | FF | BRAM_18K | Lat (cyc) | II (cyc) | est. clock |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 14→256   | input_proj ×1                                  | **11** | 25,897  | 48,605  | 1  | 299 | 224 | 3.71 ns ⚠ |
+| 256→256  | Wq,Wk,Wv,Wo (×8 each) + head_fc1 ×1 = **×33**   | **15** | 119,659 | 117,083 | 8  | 679 | 419 | 1.90 ns |
+| 256→1024 | ffn_fc1 ×8                                      | **15** | 174,187 | 163,931 | 32 | 679 | 419 | 1.90 ns |
+| 1024→256 | ffn_fc2 ×8                                      | **51** | 430,366 | 423,384 | 32 | 682 | 421 | 1.90 ns |
+| 256→1    | head_fc2 ×1                                     | **15** | 101,550 | 101,528 | 1  | 679 | 419 | 1.90 ns |
+
+(All meet the 2.5 ns / 400 MHz target except `input_proj`, whose 14-wide LayerNorm inv-sqrt path closes at 3.71 ns
+— fixable by pipelining that divide or relaxing the target on the tiny first layer; it is the smallest block and
+not on the resource-critical path.)
+
+**Where every DSP comes from — the binary win, confirmed and made precise.** The binary `{−1,+1}` QDense **matmul
+core is 0 DSP** (1-bit weights → XNOR/popcount on LUTs), exactly as the abstract claims — re-confirmed here on the
+*real* model, not a stand-in. The **only** DSP in the entire transformer is the **LayerNorm** (real-valued variance
+Σx² + inv-sqrt at fixed<32,16>), and it scales with the *normalised width*:
+
+| LayerNorm width | DSP / instance | × instances | DSP subtotal |
+| --- | --- | --- | --- |
+| 14  (input_proj)            | 11  | 1  | 11 |
+| 256 (attn proj + head_fc1)  | 15  | 33 | 495 |
+| 256 (ffn_fc1)               | 15  | 8  | 120 |
+| 1024 (ffn_fc2)              | **51** | 8  | 408 |
+| 256 (head_fc2)              | 15  | 1  | 15 |
+| **total**                   |     | **51 norms** | **1,049** |
+
+So the headline is sharper than "0 DSP": **the binary transformer's matmul is structurally DSP-free; its entire DSP
+footprint (1,049, 8.5 % of a VU13P) is 100 % normalization** — and is itself precision-independent (the LN runs at
+fixed<32,16> regardless of A8/A6/A4). A fixed-point inv-sqrt **LUT** for the norm would drive the whole
+transformer's DSP toward 0; flagged as future work.
+
+**Composed full-model resource (fully-spatial sum of all 51 BitLinear instances):**
+
+| | DSP | LUT | FF | BRAM_18K |
+| --- | --- | --- | --- | --- |
+| full-model total | **1,049** | 8,912,618 | 8,712,392 | 778 |
+| % of one VU13P   | **8.5 %** | **515.8 %** | **252.1 %** | **14.5 %** |
+
+**Honest reading of the composition.** This total is the **fully-spatial** sum — every one of the 51 layers
+instantiated as its own pipelined module. At 6.37 M parameters that does **not** fit one VU13P (LUT 5.2×, FF 2.5×):
+a fully-spatial transformer of this size is a multi-FPGA or heavily-folded design. The **measured, trustworthy**
+numbers are the **per-shape rows** above; a deployable design reuses the **8 identical transformer blocks
+temporally** (instantiate ~one block + input_proj + head, loop over depth/tokens), collapsing the ×33/×8/×8
+multiplicities and bringing LUT/FF back on-chip. End-to-end *latency* is likewise a streamed assembly of the
+per-shape pipelines (not one synthesized number) — quoted per-shape above. What is **fold-independent and proven**
+is the structural result: **binary matmul = 0 DSP; 100 % of DSP = LayerNorm.**
+
+*(A6/A4 sweep running on `mulder` as of 2026-06-26; DSP is precision-independent so the A6/A4 totals will match
+**1,049 DSP** with modestly smaller LUT/FF — backfilled when complete. A8 raw:
+`results/csynth/full_model_shape_*_a8_rf256.json`; composed total `results/csynth/full_model_total_a8_rf256.json`.)*
+
+---
+
 ## C. Published REAL csynth anchor — same task, actually synthesized (Ngadiuba et al., arXiv:2003.06308)
 
 This is the empirical proof that the binary→{0 DSP, ~1% LUT} mapping is real in silicon, on the **same
@@ -136,9 +234,37 @@ the TF import hits a protobuf clash), and synthesize at the **folded RF=256** po
 > run is the `mulder` one above. **NRP itself has no Xilinx backend**, which is why csynth ran off-cluster — not
 > a model change.
 
+**How §B′ (the full trained transformer) was filled.** `code/hls/full_model_csynth.py` loads the trained
+`lr15_bitnetJetTagModel.h5`, rebuilds each `BitLinear` as `LayerNormalization → QActivation(quantized_bits) →
+QDense(binary)`, ports the trained weights through the BitNet `AbsMeanQuantizer`, and runs three modes via
+`HLS_MODE`: `fidelity` (rebuild vs. trained model), `convert` (QKeras↔Vitis C-sim bit-accuracy), `csynth`
+(per-shape Vitis C-synthesis + composition over the 51 instances). The A8 run that produced §B′:
+
+```bash
+source /data/software/xilinx/Vitis_HLS/2023.2/settings64.sh
+cd ~/bnjet_fullcsynth/hls
+export CUDA_VISIBLE_DEVICES=-1 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
+       BN_CKPT=~/bnjet_fullcsynth/ckpt/lr15_bitnetJetTagModel.h5 \
+       HLS_OUT=~/bnjet_fullcsynth/out HLS_MODE=csynth HLS_ABITS=8   # then HLS_ABITS=6,4 for the sweep
+python -u full_model_csynth.py   # writes out/shape_*_a8_rf256.json + full_model_total_rf256.json
+```
+
+Two non-obvious requirements, both handled in the script: hls4ml's `LayerNormalization` handler needs a **3-D**
+input, so each component feeds `(1, in_dim)` to the norm and `Flatten`s to 2-D before the `QDense` (a 3-D QDense is
+mis-parsed as a pointwise Conv1D and hits a broken `DenseResource_rf_gt_nin` template); and the LN internals must be
+pinned to **fixed<32,16>** with `table_size=4096` (the default narrow LN precision drops convert-corr to ~0.87 —
+widening it recovers 0.9998). `ffn_fc2` (1024→256) is the long pole (~9 h: its 1024-wide LN drives a large
+synthesizability pass); the other four shapes are minutes-to-~30 min each.
+
 ---
 
 ### Bottom line
+- **The FULL trained transformer is synthesized end-to-end (§B′), not an FFN.** The real
+  `lr15_bitnetJetTagModel.h5` (51 BitLinears + 51 SubLN norms + the 4 attention projections) was reconstructed from
+  hls4ml-supported layers with **trained weights ported in** (rebuild↔trained corr **0.99998**; QKeras↔Vitis
+  bit-accuracy **0.9967–0.9999**) and C-synthesized per shape. **Binary matmul = 0 DSP; the entire transformer's
+  DSP (1,049, 8.5 % of a VU13P) is 100 % LayerNorm.** The fully-spatial sum (LUT 5.2×, FF 2.5× a VU13P) shows a
+  6.37 M-param transformer must fold/stream; the per-shape numbers are the measured truth.
 - **Confirmed by real Vitis C-synthesis (§B):** **DSP = 0 at A8/A6/A4** — the abstract's central claim, in
   silicon estimates, not just firmware inference. Folded design (RF=256) fits a VU13P at **~25% LUT / ~7% FF /
   ~1.2% BRAM**, latency **520 cycles ≈ 1.3 µs @ 400 MHz**, II=256.

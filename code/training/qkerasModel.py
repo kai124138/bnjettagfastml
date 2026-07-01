@@ -134,6 +134,39 @@ VARIANT       = os.environ.get("BN_VARIANT", "bitnet").strip().lower()
 assert VARIANT in ("bitnet", "vanilla", "w8a8"), \
     f"BN_VARIANT must be one of bitnet|vanilla|w8a8 (got {VARIANT!r})"
 
+# ── Architectural-variant knobs (the "a bunch of different transformers" sweep axis) ──
+# Every knob DEFAULTS to the current/upstream behaviour, so existing checkpoints and jobs
+# are byte-for-byte unchanged; each non-default value is an opt-in architectural ablation
+# trained from scratch on GPU. Grounded in the BitNet paper (SubLN, GELU FFN) + Russell's
+# original qkerasModel.py. These let one model definition express the whole variant matrix.
+#   BN_NORM_TYPE      "layernorm" (default): the paper's mean-subtracting SubLN (Eq 12),
+#                       i.e. the existing RMSNorm class. "rmsnorm": TRUE RMSNorm
+#                       x*rsqrt(mean(x^2)+eps) with NO mean subtraction (cheaper; drops the
+#                       centering term). "none": identity (control: how much does norm buy?).
+#   BN_NORM_PLACEMENT "per_linear" (default): a norm inside EVERY BitLinear (upstream).
+#                       "shared_prenorm": ONE norm per sub-layer feeding Q/K/V and the FFN
+#                       input — the canonical pre-norm transformer placement (~3x fewer norms).
+#   BN_POS_ENC        "learned" (default): the upstream Embedding table — NOTE this is applied
+#                       to a constant tf.range() so Keras folds it to a FIXED RANDOM offset that
+#                       is NOT a tracked/trained weight (kept for back-compat with the lr15 ckpt).
+#                       "learned_real": a genuinely trainable (N,D) position table (add_weight).
+#                       "none": treat the jet as an unordered set (permutation-invariant).
+#                       "sinusoidal": fixed sin/cos (Vaswani).
+#   BN_POOL           "gap" (default): GlobalAveragePooling1D. "sum": sum over particles.
+#                       "cls": a learnable BERT-style CLS token (sequence 10->11, read row 0).
+#   BN_FFN_ACT        "relu" (default) | "gelu" (the BitNet paper's FFN nonlinearity).
+NORM_TYPE      = os.environ.get("BN_NORM_TYPE", "layernorm").strip().lower()
+NORM_PLACEMENT = os.environ.get("BN_NORM_PLACEMENT", "per_linear").strip().lower()
+POS_ENC        = os.environ.get("BN_POS_ENC", "learned").strip().lower()
+POOL           = os.environ.get("BN_POOL", "gap").strip().lower()
+FFN_ACT        = os.environ.get("BN_FFN_ACT", "relu").strip().lower()
+assert NORM_TYPE in ("layernorm", "rmsnorm", "none"), f"bad BN_NORM_TYPE={NORM_TYPE!r}"
+assert NORM_PLACEMENT in ("per_linear", "shared_prenorm"), f"bad BN_NORM_PLACEMENT={NORM_PLACEMENT!r}"
+assert POS_ENC in ("learned", "learned_real", "none", "sinusoidal"), f"bad BN_POS_ENC={POS_ENC!r}"
+assert POOL in ("gap", "sum", "cls"), f"bad BN_POOL={POOL!r}"
+assert FFN_ACT in ("relu", "gelu"), f"bad BN_FFN_ACT={FFN_ACT!r}"
+_NORM_INSIDE_DEFAULT = (NORM_PLACEMENT == "per_linear")  # BitLinear self-norms iff per_linear
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 1-BIT PRIMITIVES
@@ -227,11 +260,16 @@ class BitLinear(Layer):
 
     Calls activation_quant to quantize RMSNorm activation.
     """
-    def __init__(self, units, use_bias=True, reg=L1_REG, **kwargs):
+    def __init__(self, units, use_bias=True, reg=L1_REG, norm_inside=None, **kwargs):
         super().__init__(**kwargs)
         self.units    = units
         self.use_bias = use_bias
         self.reg      = reg
+        # Does this BitLinear apply its own SubLN before quantizing? Defaults to
+        # BN_NORM_PLACEMENT (True=per_linear/upstream; False=shared_prenorm, where the
+        # enclosing block owns one shared norm). Saved in get_config so new checkpoints are
+        # self-describing; old checkpoints (no key) fall back to the per_linear default.
+        self.norm_inside = _NORM_INSIDE_DEFAULT if norm_inside is None else bool(norm_inside)
 
     def build(self, input_shape):
         in_dim = int(input_shape[-1])
@@ -260,7 +298,9 @@ class BitLinear(Layer):
         # numeric precision of the matmul. For "bitnet" we quantize the kernel INSIDE the
         # forward pass (STE) against the full-precision latent master weight Adam updates;
         # combined with the activation STE, gradients flow through the whole stack.
-        x_norm = RMSNorm(name=self.name + "_norm")(x)
+        # make_norm() picks the norm type (BN_NORM_TYPE); when norm_inside is False
+        # (shared_prenorm) the enclosing block has already normed, so this is a no-op.
+        x_norm = make_norm(name=self.name + "_norm")(x) if self.norm_inside else x
         if VARIANT == "vanilla":
             # Full-precision baseline: standard Dense (no weight/activation quantization).
             out = tf.matmul(x_norm, self.kernel)
@@ -278,7 +318,7 @@ class BitLinear(Layer):
     def get_config(self):
         cfg = super().get_config()
         cfg.update({"units": self.units, "use_bias": self.use_bias,
-                    "reg": self.reg})
+                    "reg": self.reg, "norm_inside": self.norm_inside})
         return cfg
 
 
@@ -314,6 +354,98 @@ class RMSNorm(Layer):
         return cfg
 
 
+class TrueRMSNorm(Layer):
+    """TRUE RMSNorm (Zhang & Sennrich 2019): y = x * rsqrt(mean(x^2) + eps).
+
+    Unlike the (misnamed) ``RMSNorm`` above — which subtracts the mean and is therefore
+    full LayerNorm / SubLN — this drops the mean-centering term entirely. It is the
+    ``BN_NORM_TYPE=rmsnorm`` variant: an ablation of "does the BitNet paper's mean
+    subtraction actually matter for 1-bit jet tagging?" In hardware it also removes the
+    running-mean subtract (one fewer reduction per token), leaving only Sx^2 + inv-sqrt.
+    No affine (gamma/beta), to match the parameter-free RMSNorm used elsewhere here.
+    """
+    def __init__(self, eps: float = 1e-6, **kwargs):
+        super().__init__(**kwargs)
+        self.eps = eps
+
+    def call(self, x):
+        ms = tf.reduce_mean(tf.square(x), axis=-1, keepdims=True)
+        return x * tf.math.rsqrt(ms + self.eps)
+
+    def get_config(self):
+        cfg = super().get_config()
+        cfg.update({"eps": self.eps})
+        return cfg
+
+
+class IdentityNorm(Layer):
+    """No normalisation (``BN_NORM_TYPE=none``): the lower-bound control. 1-bit stacks
+    usually NEED a norm for output-variance control (BitNet Sec 2), so this is expected
+    to train worse — it quantifies how much the SubLN actually buys on this task."""
+    def call(self, x):
+        return x
+
+
+def make_norm(name=None):
+    """Norm-layer factory selected by ``BN_NORM_TYPE``. Default 'layernorm' returns the
+    upstream mean-subtracting ``RMSNorm`` with the SAME name pattern, so loading existing
+    checkpoints is unaffected. 'rmsnorm' -> TrueRMSNorm; 'none' -> IdentityNorm."""
+    if NORM_TYPE == "rmsnorm":
+        return TrueRMSNorm(name=name)
+    if NORM_TYPE == "none":
+        return IdentityNorm(name=name)
+    return RMSNorm(name=name)
+
+
+class CLSToken(Layer):
+    """Prepend a single learnable BERT-style classification token (``BN_POOL=cls``).
+
+    Sequence length 10 -> 11; the transformer mixes the CLS row with every particle, and
+    the head reads row 0 as the pooled jet representation — an alternative to averaging
+    over particles (GlobalAveragePooling1D). The token is a learnable (1,1,D) weight."""
+    def build(self, input_shape):
+        d = int(input_shape[-1])
+        self.cls = self.add_weight(name="cls_vec", shape=(1, 1, d),
+                                   initializer="glorot_uniform", trainable=True)
+        self.built = True
+
+    def call(self, x):
+        B = tf.shape(x)[0]
+        tok = tf.tile(self.cls, [B, 1, 1])     # (B,1,D)
+        return tf.concat([tok, x], axis=1)     # (B, N+1, D)
+
+
+def _sinusoidal_pos(n, d):
+    """Fixed sinusoidal positional encoding (Vaswani et al.), as a (n,d) tf constant.
+    Used for ``BN_POS_ENC=sinusoidal`` — a non-learned alternative to the Embedding table."""
+    pos = np.arange(n)[:, None].astype(np.float32)
+    i   = np.arange(d)[None, :].astype(np.float32)
+    ang = pos / np.power(10000.0, (2.0 * np.floor(i / 2.0)) / float(d))
+    pe = np.zeros((n, d), dtype=np.float32)
+    pe[:, 0::2] = np.sin(ang[:, 0::2])
+    pe[:, 1::2] = np.cos(ang[:, 1::2])
+    return tf.constant(pe)
+
+
+class LearnedPosEnc(Layer):
+    """A genuinely TRAINABLE positional encoding (``BN_POS_ENC=learned_real``).
+
+    The upstream default (``BN_POS_ENC=learned``) builds ``Embedding(N,D)(tf.range(N))``;
+    because ``tf.range`` is a plain constant (not a KerasTensor wired from the input), Keras
+    folds that Embedding into a FIXED RANDOM offset whose weights are never tracked or updated
+    — i.e. the "learned" PE never actually learns (verified: it adds 0 trainable params).
+    This layer instead allocates the (N,D) table via ``add_weight`` so it IS tracked and
+    trained, exactly like the CLS token. Broadcast-added over the batch."""
+    def build(self, input_shape):
+        n = int(input_shape[-2]); d = int(input_shape[-1])
+        self.pos = self.add_weight(name="pos_table", shape=(1, n, d),
+                                   initializer="glorot_uniform", trainable=True)
+        self.built = True
+
+    def call(self, x):
+        return x + self.pos
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # TRANSFORMER BLOCK
 # ══════════════════════════════════════════════════════════════════════════════
@@ -347,24 +479,33 @@ class BitMHSA(Layer):
         self.reg      = reg
 
     def build(self, input_shape):
+        _shared = (NORM_PLACEMENT == "shared_prenorm")
+        _ni = not _shared   # sub-linears self-norm only in per_linear (upstream) mode
+        self.pre_norm = make_norm(name=self.name + "_prenorm") if _shared else None
         self.W_q = BitLinear(self.d_model, use_bias=False, reg=self.reg,
-                             name=self.name + "_Wq")
+                             norm_inside=_ni, name=self.name + "_Wq")
         self.W_k = BitLinear(self.d_model, use_bias=False, reg=self.reg,
-                             name=self.name + "_Wk")
+                             norm_inside=_ni, name=self.name + "_Wk")
         self.W_v = BitLinear(self.d_model, use_bias=False, reg=self.reg,
-                             name=self.name + "_Wv")
+                             norm_inside=_ni, name=self.name + "_Wv")
         self.W_o = BitLinear(self.d_model, use_bias=True,  reg=self.reg,
-                             name=self.name + "_Wo")
+                             norm_inside=_ni, name=self.name + "_Wo")
         self.built = True
 
     def call(self, x, training=False):
         B  = tf.shape(x)[0]
-        N  = tf.shape(x)[1]   # sequence length = N_PART_PER_JET = 10
+        N  = tf.shape(x)[1]   # sequence length = N_PART_PER_JET = 10 (or 11 with CLS)
+
+        # In shared_prenorm, normalise ONCE here and feed the same normed tensor to Q/K/V
+        # (whose BitLinears have norm_inside=False); W_o then operates on the attention
+        # context directly. In per_linear (default) pre_norm is None and each BitLinear
+        # self-norms, exactly as upstream.
+        xqkv = self.pre_norm(x) if self.pre_norm is not None else x
 
         # Project with binary weights  →  (B, N, d_model)
-        Q = self.W_q(x)
-        K = self.W_k(x)
-        V = self.W_v(x)
+        Q = self.W_q(xqkv)
+        K = self.W_k(xqkv)
+        V = self.W_v(xqkv)
 
         # Split into heads  →  (B, n_heads, N, d_head)
         def split_heads(t):
@@ -415,13 +556,18 @@ class BitFFN(Layer):
         self.reg     = reg
 
     def build(self, input_shape):
-        self.fc1 = BitLinear(self.ffn_dim, reg=self.reg, name=self.name+"_fc1")
-        self.fc2 = BitLinear(self.d_model, reg=self.reg, name=self.name+"_fc2")
+        _shared = (NORM_PLACEMENT == "shared_prenorm")
+        _ni = not _shared
+        self.pre_norm = make_norm(name=self.name + "_prenorm") if _shared else None
+        self.fc1 = BitLinear(self.ffn_dim, reg=self.reg, norm_inside=_ni, name=self.name+"_fc1")
+        self.fc2 = BitLinear(self.d_model, reg=self.reg, norm_inside=_ni, name=self.name+"_fc2")
         self.built = True
 
     def call(self, x):
+        if self.pre_norm is not None:
+            x = self.pre_norm(x)          # shared_prenorm: norm once at the FFN input
         x = self.fc1(x)
-        x = tf.nn.relu(x)
+        x = tf.nn.gelu(x) if FFN_ACT == "gelu" else tf.nn.relu(x)
         x = self.fc2(x)
         return x
 
@@ -505,6 +651,8 @@ def build_bitnet_jet_tagger(
     print(f"[arch] variant={VARIANT.upper()}  weights={_wstr}  act={_astr}  "
           f"attention={'SOFTMAX-FREE ReLU(QK^T)/N (binarizable)' if SOFTMAX_FREE else 'softmax'}  "
           f"d_model={d_model} heads={n_heads} layers={n_layers} ffn={ffn_dim}")
+    print(f"[arch] norm={NORM_TYPE} placement={NORM_PLACEMENT} pos_enc={POS_ENC} "
+          f"pool={POOL} ffn_act={FFN_ACT}")
 
     # ── Input ────────────────────────────────────────────────────────────────
     inputs = Input(shape=(n_particles, n_features), name="input_1")
@@ -515,16 +663,27 @@ def build_bitnet_jet_tagger(
     x = BitLinear(d_model, reg=reg, name="input_proj")(inputs)
     # shape: (batch, 10, d_model)
 
-    # ── Learned positional encoding  ─────────────────────────────────────────
-    # Particles are unordered in principle, but giving the model a
-    # learnable position token lets it discover any residual pT-ordering
-    # that may be present in your input features.
-    pos_emb = tf.keras.layers.Embedding(
-        input_dim   = n_particles,
-        output_dim  = d_model,
-        name        = "pos_embedding"
-    )(tf.range(n_particles))                 # shape: (10, d_model)
-    x = x + pos_emb                          # broadcast over batch
+    # ── Positional encoding (BN_POS_ENC)  ─────────────────────────────────────
+    # Particles are unordered in principle. "learned" (default) gives the model a
+    # learnable position token to discover any residual pT-ordering present in the
+    # inputs; "sinusoidal" uses a fixed Vaswani table; "none" treats the jet as a pure
+    # set (permutation-invariant up to the final pool) — often the right inductive bias.
+    if POS_ENC == "learned":
+        pos_emb = tf.keras.layers.Embedding(
+            input_dim   = n_particles,
+            output_dim  = d_model,
+            name        = "pos_embedding"
+        )(tf.range(n_particles))                 # shape: (10, d_model)
+        x = x + pos_emb                          # broadcast over batch
+    elif POS_ENC == "learned_real":
+        x = LearnedPosEnc(name="pos_enc_learned")(x)   # genuinely trainable (N,D) table
+    elif POS_ENC == "sinusoidal":
+        x = x + _sinusoidal_pos(n_particles, d_model)
+    # else "none": no positional information added.
+
+    # ── Optional learnable CLS token (BN_POOL=cls)  ───────────────────────────
+    if POOL == "cls":
+        x = CLSToken(name="cls_token")(x)        # sequence n_particles -> n_particles+1
 
     # ── Transformer blocks  ───────────────────────────────────────────────────
     for i in range(n_layers):
@@ -538,9 +697,14 @@ def build_bitnet_jet_tagger(
     # shape: (batch, 10, d_model)
 
 
-    # ── Global average pool: sequence → vector  ───────────────────────────────
-    # Mirrors GlobalAveragePooling1D — aggregates over particles.
-    x = GlobalAveragePooling1D(name="global_average_pooling1d")(x)
+    # ── Pool sequence → vector (BN_POOL)  ─────────────────────────────────────
+    if POOL == "cls":
+        # Read the CLS row (BERT-style); the transformer has mixed it with all particles.
+        x = tf.keras.layers.Lambda(lambda t: t[:, 0], name="cls_pool")(x)
+    elif POOL == "sum":
+        x = tf.keras.layers.Lambda(lambda t: tf.reduce_sum(t, axis=1), name="sum_pool")(x)
+    else:  # "gap" (default): aggregate over particles
+        x = GlobalAveragePooling1D(name="global_average_pooling1d")(x)
     # shape: (batch, d_model)
 
     # ── Classification head  ──────────────────────────────────────────────────
@@ -563,6 +727,18 @@ def main(args):
     bkgTrainFile         = args.BkgTrainFile
     sig_jetData_TrainFile= args.sig_jetData_TrainFile
     bkg_jetData_TrainFile= args.bkg_jetData_TrainFile
+
+    # ── Optional reproducibility seed (BN_SEED) ──────────────────────────────
+    # Unset (default) = upstream behaviour: unseeded random init + data shuffle, so repeated
+    # runs sample run-to-run variance. Set BN_SEED=<int> to fix python/numpy/tf RNGs for
+    # reproducible A/B comparisons (used by the variant seed-repeat sweep to separate a real
+    # architecture effect from training noise).
+    _seed = os.environ.get("BN_SEED", "").strip()
+    if _seed:
+        import random as _random
+        _s = int(_seed)
+        _random.seed(_s); np.random.seed(_s); tf.random.set_seed(_s)
+        print(f"[seed] BN_SEED={_s}  (python/numpy/tf RNGs fixed for reproducibility)")
 
     print("Reading signal from "          + signalTrainFile)
     print("Reading background from "      + bkgTrainFile)
@@ -664,6 +840,8 @@ def main(args):
                        if VARIANT == "bitnet" else ("fp32" if VARIANT == "vanilla" else "int8"),
                        "act_bits": ACT_BITS if VARIANT == "bitnet" else (32 if VARIANT == "vanilla" else 8),
                        "softmax_free": SOFTMAX_FREE,
+                       "norm_type": NORM_TYPE, "norm_placement": NORM_PLACEMENT,
+                       "pos_enc": POS_ENC, "pool": POOL, "ffn_act": FFN_ACT,
                        "d_model": D_MODEL, "n_heads": N_HEADS, "n_layers": N_LAYERS,
                        "ffn_dim": FFN_DIM, "l1_reg": L1_REG, "epochs": EPOCHS,
                        "batch_size": BATCH_SIZE, "n_train": int(len(y)),

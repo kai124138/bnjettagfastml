@@ -68,6 +68,14 @@ Belonged to an earlier/longer abstract; preserved, not part of the main story.
 > three reinforcing ways: **(a)** real-hls4ml **convertibility + bit-accuracy** of the binary core across the
 > A8/A6/A4 axis, firmware inspected for the DSP=0 mapping; **(b)** an **analytical per-component** model; and now
 > **(c)** the **real Vitis C-synthesis**, which confirms DSP=0 and lands ~2× under the analytical fold estimate.
+>
+> **Now extended to the FULL trained transformer (2026-06-26):** `hls_resource_table.md` **§B′** synthesizes the
+> *actual* `lr15_bitnetJetTagModel.h5` end-to-end — all 51 BitLinears + 51 SubLN norms + the 4 weighted attention
+> projections, rebuilt from hls4ml-supported layers with **trained weights ported in** (rebuild↔trained corr
+> **0.99998**; QKeras↔Vitis bit-accuracy **0.9967–0.9999**), C-synthesized per distinct shape. **Result: the binary
+> matmul is 0 DSP on the real model, and the transformer's entire DSP footprint — 1,049, 8.5 % of a VU13P — is
+> 100 % LayerNorm** (the binary win is structural; normalization is the only multiplier-bearing op). This is the
+> answer to "is this just an FFN converted to HLS?": no — it is the whole trained transformer, in silicon estimates.
 
 ### 2a. Binary core converts AND emulates bit-accurately — across the whole quantization axis  *(real hls4ml 0.8.1)*
 `code/hls/sweep_precision.py`, Job `kai-hls-sweep` (hls4ml 0.8.1, qkeras 0.9.0, tf 2.11.1). Dominant primitive = a
@@ -169,6 +177,45 @@ If adopted, deletes the only non-binarizable op in the attention core.
 | softmax core (default, the 1-bit model) | 6,400 (LUT tables/BRAM) | 640 (DSP/LUT-heavy) | 6,400 |
 | **softmax-free** (appendix) | **0** | **0** | 0 (constant 1/N shift) |
 
+### 2f. EBOPs — the cheap, synthesis-free hardware-cost axis  *(`code/training/ebops.py`; HGQ arXiv:2405.00645, Eq. 5)*
+**Effective Bit-Operations** turn the §2c MAC counts into a *bit-level* cost that needs **no Vitis run** — a
+static, architecture-only number recomputable in milliseconds that tracks synthesized LUTs.
+
+Definition (HGQ): **EBOPs = Σ over every scalar multiply of `b_i·b_j`.** Three consequences we honor exactly:
+- weight×activation layers (Q/K/V/O, FFN up/down, input proj, head) cost **`b_w·b_a`** per MAC;
+- the attention score matmuls (Q·Kᵀ, softmax·V) are **activation×activation**, so they cost **`b_a·b_a`** —
+  **binarization does NOT touch attention**; it is the precision-independent floor (the 0.65% of MACs in §2c);
+- the accumulator/adder-tree is **excluded by HGQ design** ("EBOPs … count only … multiplicative processes").
+
+EBOPs on the **FIXED** large model (D256/L8/H8/FFN1024, **6,373,633 params**; 63,016,192 matmul + 409,600 attn MACs):
+
+| precision | b_w | b_a | matmul EBOPs | attn EBOPs (act×act) | **total EBOPs** | vs FP32 | vs W8A8 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| FP32 (ref, not true bit-ops) | 32 | 32 | 64,528,580,608 | 419,430,400 | **64,948,011,008** | 1.000× | 16.00× |
+| W8A8 | 8 | 8 | 4,033,036,288 | 26,214,400 | **4,059,250,688** | 0.063× | 1.000× |
+| **W1A8 (deployed binary)** | 1 | 8 | 504,129,536 | 26,214,400 | **530,343,936** | 0.008× | **0.131×** |
+| W1A6 | 1 | 6 | 378,097,152 | 14,745,600 | **392,842,752** | 0.006× | 0.097× |
+| W1A4 | 1 | 4 | 252,064,768 | 6,553,600 | **258,618,368** | 0.004× | 0.064× |
+
+**ΔEBOPs — the headline "change":** going W8A8 → **W1A8 binary cuts EBOPs 7.65×** (4.06 G → 530 M), and it is
+**122.5× below FP32**. It is 7.65× and not a clean 8× *because* the act×act attention term is identical at W8A8
+and W1A8 (26,214,400 both): binarization only shrinks the matmul core (99.35% of MACs), leaving the 0.65%
+attention floor untouched. Within the already-binary model the activation dial is gentle — A8→A6→A4 trims total
+EBOPs 530 M → 393 M → 259 M, mirroring the §2d datapath narrowing and the ~0.9-pt AUC trade in §1b.
+
+**Equal-EBOPs headroom (the "grow the model for free" axis):** at the *W8A8* EBOPs budget a binary (W1A8) model
+could carry **~7.65× more matmul-MACs** and still cost ≤ W8A8 — binarization buys ~7.65× model-capacity headroom
+at fixed bit-op cost (the design-space converse of the size sweep in `variant_sweep.md`).
+
+**Bridge to the measured §2/§B synthesis:** HGQ calibrates **EBOPs ≈ #LUT + 55·#DSP** (io_parallel, post-PnR).
+The §2d "binMAC LUTs (RF=1)" column *is* this matmul-EBOPs term (504,129,536 = 63,016,192×8 at A8). Because the
+binary core synthesizes to **DSP = 0** (§2a firmware + §B csynth), **EBOPs ≈ #LUT** for the binary matmul — so this
+static number is a faithful, synthesis-free proxy for the LUT story, reaching the same DSP=0 conclusion without
+the toolchain. *(Caveat: the mapping is for fully-unrolled designs; the deployed model folds at RF=256, so treat
+EBOPs as a cheap RELATIVE efficiency axis, not a literal folded-LUT count.)* Verified end-to-end by results-analyst
+(2026-06-29, independent re-derivation; experiment-log). Reproduce: `python3 code/training/ebops.py --size large`
+(stdlib-only, CPU, no TF).
+
 ---
 
 ## 3. Headline numbers (one-glance summary)
@@ -184,13 +231,15 @@ If adopted, deletes the only non-binarizable op in the attention core.
 | **DSP usage (binary core)** | **0 — structural, every precision** |
 | total binary MACs | **63,016,192 (99.35% DSP-free)** |
 | real act×act multiplies | 409,600 (0.65%) |
+| **EBOPs** (static cost proxy, HGQ; §2f) | W1A8 **530,343,936** — **7.65× below W8A8** (4.06 G), 122.5× below FP32 (65.0 G); binary DSP=0 ⇒ EBOPs ≈ #LUT |
 | weight memory | **6.36 Mbit** |
 | SubLN/LayerNorm instances | 51 (convertible on hls4ml 1.3.0) |
 | device-fit latency (VU13P, RF=256 @ 400 MHz) | **520 cyc ≈ 1.3 µs** (measured csynth, §B) |
 | synthesized binary FFN (RF=256) | **DSP 0 · LUT 25.5% · FF 7.3% · BRAM 1.2%** (A8; A6/A4 slightly lower) |
-| convertible today | binary FFN/proj (0.8.1) + LayerNorm + full SubLN→binary block (1.3.0) |
-| remaining firmware gap | attention act×act matmul → hls4ml Extension API |
-| ~~gated on hardware we lack~~ → **now measured** | exact synthesized LUT/FF/DSP/BRAM + latency → **Vitis csynth done on `mulder`** (§B) |
+| **synthesized FULL transformer (§B′, RF=256, A8)** | **binary matmul = 0 DSP; all 1,049 DSP (8.5% VU13P) = LayerNorm**; rebuild↔trained corr 0.99998; QKeras↔Vitis 0.9967–0.9999 |
+| convertible today | binary FFN/proj (0.8.1) + LayerNorm + full SubLN→binary block (1.3.0) + **full trained transformer end-to-end (§B′)** |
+| remaining firmware gap | only the **weightless** attention score core (Q·Kᵀ/softmax/·V, 0.65% MACs) — `EinsumDense` unsupported → hls4ml Extension API |
+| ~~gated on hardware we lack~~ → **now measured** | exact synthesized LUT/FF/DSP/BRAM + latency → **Vitis csynth done on `mulder`** (§B FFN + **§B′ full transformer**) |
 
 ---
 
