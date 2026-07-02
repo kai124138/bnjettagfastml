@@ -41,9 +41,19 @@ PY=python
 ```
 
 ## 3. Put Vitis HLS on PATH
+
+> **CORRECTION 2026-07-02 (verified by smoke test on mulder):** hls4ml 1.4.0.dev's Vitis
+> backend launches synthesis through **`vitis-run`** (the unified CLI), which lives in the
+> **full Vitis** install — NOT in `Vitis_HLS/2023.2/bin`. Sourcing only the Vitis_HLS
+> settings64.sh makes `hls_model.build(synth=True)` die with
+> `Exception: Vitis installation not found. Make sure "vitis-run" is on PATH.`
+> The June-25/26 full-model runs worked because they had the full Vitis bin on PATH
+> (see `out/csynth_a8.log`: `vitis-run v2023.2 ... Launching vitis_hls`). Use:
+
 ```bash
-source /data/software/xilinx/Vitis_HLS/2023.2/settings64.sh   # mulder's path; adjust elsewhere
-command -v vitis_hls                                          # must print a path
+source /data/software/xilinx/Vitis/2023.2/settings64.sh       # FULL Vitis (provides vitis-run)
+command -v vitis-run && command -v vitis_hls                  # BOTH must print a path
+# (vitis_hls also resolves from the full-Vitis tree; the Vitis_HLS-only source is not enough)
 ```
 
 ## 4. Run it

@@ -57,14 +57,18 @@ Provenance of the layer profile (read qkerasModel.py alongside this):
   * pool default "gap": GlobalAveragePooling1D over N particles -> (D,). No CLS,
     so seq_len N = N_PART = 10 (BN_POOL=cls would make it N_PART+1 = 11).
   * head: head_fc1 BitLinear(D) (bias) on the pooled vector (ONE token), ReLU,
-    head_fc2 BitLinear(1) (bias).
+    head_fc2 BitLinear(N_CLASSES) (bias) — 1 logit in era 1, 5 logits in era 2.
 
-Cross-check: profile(...).params reproduces the verified CPU-preflight counts
-exactly — tiny 26,529 / small 153,793 / medium 808,065 / large 6,373,633.
+Two dataset eras (RESEARCH.md §4): era 1 = private 2-class (N_FEAT=14, 1-logit
+head); era 2 = public HLS4ML LHC Jet 5-class (N_FEAT=16, 5-logit head). Default
+is era 2 (current). Cross-check: profile(...).params reproduces the verified
+CPU-preflight counts exactly — era 1: tiny 26,529 / small 153,793 / medium
+808,065 / large 6,373,633; era 2: large 6,375,173 (round-5 preflight 2026-07-01).
 
 Usage
 -----
-    python ebops.py                 # large (fixed main) per-layer + BOPs table
+    python ebops.py                 # era-2 large (fixed main) per-layer + BOPs table
+    python ebops.py --era 1         # frozen era-1 accounting (14 feat, 1-logit head)
     python ebops.py --size all      # totals for tiny/small/medium/large
     python ebops.py --size medium
 
@@ -79,22 +83,37 @@ from typing import Dict, List, Tuple
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixed data-pipeline constants (must match qkerasModel.py)
 # ─────────────────────────────────────────────────────────────────────────────
-N_FEAT = 14
-N_PART = 10   # particles per jet == attention sequence length (GAP pool, no CLS)
+# Two dataset eras (RESEARCH.md §4) — the model I/O differs between them:
+#   era 1 (frozen, runs ≤ round-4): private 2-class set — 14 features, 1-logit head
+#   era 2 (current, round-5+): public HLS4ML LHC Jet — 16 features, 5-class head
+# N_PART = 10 in both (top-10 constituents by pT; GAP pool, no CLS ⇒ seq len 10).
+N_PART = 10
 
-# Named architecture sizes. The FIXED main model is "large" (the upstream config).
-# (n_feat, n_part, d_model, n_heads, n_layers, ffn_dim)
-SIZES: Dict[str, Tuple[int, int, int, int, int, int]] = {
-    "tiny":   (N_FEAT, N_PART,  32, 4, 2,  128),
-    "small":  (N_FEAT, N_PART,  64, 8, 3,  256),
-    "medium": (N_FEAT, N_PART, 128, 8, 4,  512),
-    "large":  (N_FEAT, N_PART, 256, 8, 8, 1024),   # <-- FIXED main architecture
+
+@dataclass(frozen=True)
+class Era:
+    n_feat: int
+    n_classes: int
+    # Known-good trainable-parameter counts from verified CPU preflights; the
+    # profiler asserts against these so accounting drift is caught loudly.
+    # Sizes without a verified preflight are absent and not asserted.
+    known_params: Dict[str, int]
+
+
+ERAS: Dict[str, Era] = {
+    "1": Era(n_feat=14, n_classes=1, known_params={
+        "tiny": 26_529, "small": 153_793, "medium": 808_065, "large": 6_373_633}),
+    # era-2: only `large` has a verified preflight (round-5, 2026-07-01).
+    "2": Era(n_feat=16, n_classes=5, known_params={"large": 6_375_173}),
 }
 
-# Known-good trainable-parameter counts from the verified CPU preflights. The
-# profiler asserts against these so any drift in the accounting is caught loudly.
-KNOWN_PARAMS: Dict[str, int] = {
-    "tiny": 26_529, "small": 153_793, "medium": 808_065, "large": 6_373_633,
+# Named architecture sizes. The FIXED main model is "large" (the upstream config).
+# (d_model, n_heads, n_layers, ffn_dim) — input/head dims come from the era.
+SIZES: Dict[str, Tuple[int, int, int, int]] = {
+    "tiny":   ( 32, 4, 2,  128),
+    "small":  ( 64, 8, 3,  256),
+    "medium": (128, 8, 4,  512),
+    "large":  (256, 8, 8, 1024),   # <-- FIXED main architecture
 }
 
 
@@ -113,7 +132,9 @@ class LayerCost:
 @dataclass
 class Profile:
     size: str
-    dims: Tuple[int, int, int, int, int, int]
+    era: str
+    dims: Tuple[int, int, int, int, int, int]   # (n_feat, n_part, D, H, L, F)
+    n_classes: int
     layers: List[LayerCost] = field(default_factory=list)
 
     # ---- aggregate helpers -------------------------------------------------
@@ -136,12 +157,15 @@ class Profile:
         return sum(l.macs for l in self.layers if l.kind == "attn")
 
 
-def build_profile(size: str) -> Profile:
-    """Encode the closed-form per-layer MAC + param profile for a named size."""
-    n_feat, n_part, D, H, L, F = SIZES[size]
+def build_profile(size: str, era: str = "2") -> Profile:
+    """Encode the closed-form per-layer MAC + param profile for a named size/era."""
+    D, H, L, F = SIZES[size]
+    e = ERAS[era]
+    n_feat, n_part = e.n_feat, N_PART
     assert D % H == 0, f"d_model {D} not divisible by n_heads {H}"
     N = n_part                                  # seq len (GAP -> N_PART; CLS would be +1)
-    prof = Profile(size=size, dims=SIZES[size])
+    prof = Profile(size=size, era=era, dims=(n_feat, n_part, D, H, L, F),
+                   n_classes=e.n_classes)
 
     def lin(name, in_dim, units, n_tokens, use_bias, kind="matmul", note=""):
         params = in_dim * units + (units if use_bias else 0)
@@ -192,9 +216,10 @@ def build_profile(size: str) -> Profile:
         "global_average_pooling1d", 0, 0, "elementwise",
         note="mean over N particles -> (D,)"))
 
-    # ── Classifier head: BitLinear(D) -> ReLU -> BitLinear(1), single token ──
+    # ── Classifier head: BitLinear(D) -> ReLU -> BitLinear(n_classes), 1 token ──
     lin("head_fc1", D, D, 1, use_bias=True, note="head dense D->D (binary)")
-    lin("head_fc2", D, 1, 1, use_bias=True, note="head logit D->1 (binary)")
+    lin("head_fc2", D, e.n_classes, 1, use_bias=True,
+        note=f"head logits D->{e.n_classes} (binary)")
 
     return prof
 
@@ -271,18 +296,19 @@ QUANT_PRESETS: List[Tuple[str, int, int]] = [
 # Pretty-printers
 # ─────────────────────────────────────────────────────────────────────────────
 def _assert_params(prof: Profile) -> None:
-    known = KNOWN_PARAMS.get(prof.size)
+    known = ERAS[prof.era].known_params.get(prof.size)
     if known is not None:
         assert prof.params == known, (
-            f"PARAM MISMATCH for {prof.size}: computed {prof.params:,} != "
-            f"known-good {known:,} — the per-layer accounting drifted.")
+            f"PARAM MISMATCH for {prof.size} (era {prof.era}): computed "
+            f"{prof.params:,} != known-good {known:,} — the accounting drifted.")
 
 
 def print_layer_table(prof: Profile) -> None:
     _assert_params(prof)
     n_feat, n_part, D, H, L, F = prof.dims
-    print(f"# Per-layer MAC + param profile — size={prof.size} "
-          f"(D={D} H={H} L={L} F={F}, N_PART={n_part}, N_FEAT={n_feat})\n")
+    print(f"# Per-layer MAC + param profile — size={prof.size} era={prof.era} "
+          f"(D={D} H={H} L={L} F={F}, N_PART={n_part}, N_FEAT={n_feat}, "
+          f"N_CLASSES={prof.n_classes})\n")
     print(f"| {'layer':28s} | {'kind':11s} | {'params':>11s} | {'MACs/jet':>13s} | note |")
     print(f"|{'-'*30}|{'-'*13}|{'-'*13}|{'-'*15}|------|")
     for l in prof.layers:
@@ -290,8 +316,13 @@ def print_layer_table(prof: Profile) -> None:
     print(f"|{'-'*30}|{'-'*13}|{'-'*13}|{'-'*15}|------|")
     print(f"| {'TOTAL':28s} | {'':11s} | {prof.params:>11,} | {prof.macs_total:>13,} | "
           f"matmul={prof.macs_matmul:,} attn={prof.macs_attn:,} |")
-    known = KNOWN_PARAMS.get(prof.size)
-    tag = f"== known-good {known:,}  [OK]" if known == prof.params else f"!= known-good {known:,}  [MISMATCH]"
+    known = ERAS[prof.era].known_params.get(prof.size)
+    if known is None:
+        tag = f"(no verified era-{prof.era} preflight for this size — not asserted)"
+    elif known == prof.params:
+        tag = f"== known-good {known:,}  [OK]"
+    else:
+        tag = f"!= known-good {known:,}  [MISMATCH]"
     print(f"\nparam cross-check: computed {prof.params:,}  {tag}")
     print(f"MAC split: matmul (weight*act, EBOPs core) = {prof.macs_matmul:,} "
           f"({100*prof.macs_matmul/prof.macs_total:.2f}%) | "
@@ -301,7 +332,8 @@ def print_layer_table(prof: Profile) -> None:
 
 def print_ebops_table(prof: Profile) -> None:
     n_feat, n_part, D, H, L, F = prof.dims
-    print(f"\n# EBOPs-per-quantization (HGQ arXiv:2405.00645) — size={prof.size} (D={D} H={H} L={L} F={F})")
+    print(f"\n# EBOPs-per-quantization (HGQ arXiv:2405.00645) — size={prof.size} "
+          f"era={prof.era} (D={D} H={H} L={L} F={F})")
     print("# EBOPs = matmul-MACs*b_w*b_a + attn-MACs*b_a*b_a  (accumulator excluded by HGQ definition)")
     print(f"\n| {'precision':30s} | {'b_w':>3s} | {'b_a':>3s} | {'matmul EBOPs':>16s} | "
           f"{'attn EBOPs':>13s} | {'total EBOPs':>16s} | {'vs FP32':>8s} | {'vs W8A8':>8s} |")
@@ -323,20 +355,24 @@ def print_ebops_table(prof: Profile) -> None:
     print("note: EBOPs ~= #LUT + 55*#DSP (HGQ, unrolled); binary -> DSP=0 -> EBOPs ~= #LUT.")
 
 
-def print_size_totals() -> None:
-    print("# MAC + param TOTALS across size variants (param cross-check vs preflight)\n")
+def print_size_totals(era: str) -> None:
+    print(f"# MAC + param TOTALS across size variants, era {era} "
+          f"(param cross-check vs preflight)\n")
     print(f"| {'size':7s} | {'D':>4s} | {'H':>2s} | {'L':>2s} | {'F':>5s} | "
           f"{'params':>11s} | {'known':>11s} | {'match':>6s} | {'MACs/jet':>13s} | "
           f"{'matmul MACs':>13s} | {'attn MACs':>10s} |")
     print(f"|{'-'*9}|{'-'*6}|{'-'*4}|{'-'*4}|{'-'*7}|{'-'*13}|{'-'*13}|{'-'*8}|"
           f"{'-'*15}|{'-'*15}|{'-'*12}|")
     for name in ("tiny", "small", "medium", "large"):
-        p = build_profile(name)
+        p = build_profile(name, era)
         _, _, D, H, L, F = p.dims
-        known = KNOWN_PARAMS[name]
-        ok = "OK" if p.params == known else "MISMATCH"
+        known = ERAS[era].known_params.get(name)
+        if known is None:
+            known_s, ok = "n/a", "—"
+        else:
+            known_s, ok = f"{known:,}", ("OK" if p.params == known else "MISMATCH")
         print(f"| {name:7s} | {D:>4d} | {H:>2d} | {L:>2d} | {F:>5d} | {p.params:>11,} | "
-              f"{known:>11,} | {ok:>6s} | {p.macs_total:>13,} | {p.macs_matmul:>13,} | "
+              f"{known_s:>11s} | {ok:>6s} | {p.macs_total:>13,} | {p.macs_matmul:>13,} | "
               f"{p.macs_attn:>10,} |")
 
 
@@ -348,13 +384,16 @@ def main() -> None:
     ap.add_argument("--size", default="large",
                     choices=["tiny", "small", "medium", "large", "all"],
                     help="architecture size (default: large = fixed main); 'all' = totals table")
+    ap.add_argument("--era", default="2", choices=sorted(ERAS),
+                    help="dataset era: 1 = private 2-class (14 feat, frozen), "
+                         "2 = HLS4ML LHC Jet 5-class (16 feat, current; default)")
     args = ap.parse_args()
 
     if args.size == "all":
-        print_size_totals()
+        print_size_totals(args.era)
         return
 
-    prof = build_profile(args.size)
+    prof = build_profile(args.size, args.era)
     print_layer_table(prof)
     print_ebops_table(prof)
 
