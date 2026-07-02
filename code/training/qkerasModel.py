@@ -3,15 +3,19 @@ BitNet-style 1-bit Transformer Jet Tagger
 ==========================================
 Drop-in replacement for the QKeras CNN jet tagger.
 
-Matches exactly:
-  - Input  shape : (batch, 10, 14)  [N_PART_PER_JET=10, N_FEAT=14]
-  - Output shape : (batch, 1)       [single logit, no sigmoid]
-  - Loss         : binary_crossentropy
-  - Sample weights, pruning callbacks, and training loop are unchanged.
+Data (since 2026-07-01): the public **HLS4ML LHC Jet dataset (150 particles)**
+(Zenodo; arXiv:1804.06913 high-level features, arXiv:1908.05318 constituent lists),
+already staged on the NRP kai-data PVC at /data/hls4ml_lhc_jet/. All training going
+forward uses this dataset (see .claude/memory/decisions.md, 2026-07-01).
+
+  - Input  shape : (batch, 10, 16)  [top-10 constituents by pT (high→low), 16 features each]
+  - Output shape : (batch, 5)       [raw class logits g/q/W/Z/t, no softmax]
+  - Loss         : categorical_crossentropy (from_logits)
+  - Pruning callbacks and training loop are unchanged.
 
 Architecture overview
 ---------------------
-  Input (10×14)
+  Input (10×16)
     │
   BitLinear projection  →  (10×D_MODEL)   [1-bit weights]
     │
@@ -27,7 +31,7 @@ Architecture overview
     │
   Global average pool   →  (D_MODEL,)
     │
-  BitLinear head        →  (1,)            [logit]
+  BitLinear head        →  (5,)            [class logits g/q/W/Z/t]
 
 BitLinear implementation  (W1A8, per arXiv:2310.11453 "BitNet")
 ---------------------------------------------------------------
@@ -46,6 +50,7 @@ Opt-in BN_TERNARY=1 instead uses the b1.58 follow-up (arXiv:2402.17764)
 ternary {-1,0,+1} weight scheme (absmean scale, no centralization).
 """
 
+import glob
 import h5py
 import os
 import numpy as np
@@ -64,10 +69,19 @@ from tensorflow_model_optimization.python.core.sparsity.keras import (
 )
 
 # ─────────────────────────────────────────────
-# Constants  (must match your data pipeline)
+# Constants  (HLS4ML LHC Jet dataset, 150 particles — arXiv:1908.05318)
 # ─────────────────────────────────────────────
-N_FEAT          = 14
-N_PART_PER_JET  = 10
+# The dataset stores up to 150 zero-padded constituents × 16 features per jet
+# (jetConstituentList). We keep the top-N by constituent pT, sorted high→low.
+# N=10 (default, advisor guidance 2026-07-01): small fixed input matching the
+# previous 10-particle setup; how input size affects AUC/latency/resources is a
+# LATER study — that's exactly what the BN_N_PART knob is for.
+N_FEAT          = 16
+N_PART_PER_JET  = int(os.environ.get("BN_N_PART", 10))
+# 5-class one-hot target (gluon / light-quark / W / Z / top), located BY NAME
+# in the 'jets' array via 'jetFeatureNames' — never by hard-coded column index.
+N_CLASSES       = 5
+CLASS_LABELS    = ["j_g", "j_q", "j_w", "j_z", "j_t"]
 
 # ─────────────────────────────────────────────
 # Hyperparameters  (tunable; overridable via env for NRP multi-size runs)
@@ -494,7 +508,7 @@ class BitMHSA(Layer):
 
     def call(self, x, training=False):
         B  = tf.shape(x)[0]
-        N  = tf.shape(x)[1]   # sequence length = N_PART_PER_JET = 10 (or 11 with CLS)
+        N  = tf.shape(x)[1]   # sequence length = N_PART_PER_JET (default 10; +1 with CLS)
 
         # In shared_prenorm, normalise ONCE here and feed the same normed tensor to Q/K/V
         # (whose BitLinears have norm_inside=False); W_o then operates on the attention
@@ -712,21 +726,81 @@ def build_bitnet_jet_tagger(
     x = BitLinear(d_model, reg=reg, name="head_fc1")(x)
     x = tf.keras.layers.Activation("relu", name="head_act")(x)
 
-    outputs = BitLinear(1, reg=reg, name="head_fc2")(x)
-    # shape: (batch, 1)  — raw logit, no sigmoid  ✓
+    outputs = BitLinear(N_CLASSES, reg=reg, name="head_fc2")(x)
+    # shape: (batch, 5)  — raw class logits (g/q/W/Z/t), no softmax  ✓
 
     return Model(inputs=inputs, outputs=outputs, name=f"{VARIANT}_jet_tagger")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TRAINING SCRIPT  (mirrors original train.py exactly)
+# DATA — HLS4ML LHC Jet dataset (150 particles)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def load_hls4ml_jets(data_dir, n_part=None):
+    """Load a directory of jetImage_*_150p_*.h5 files (HLS4ML LHC Jet dataset,
+    Zenodo / arXiv:1908.05318; on NRP under /data/hls4ml_lhc_jet/{train/train,val/val}).
+
+    Per file:
+      jetConstituentList   (n, 150, 16) float — zero-padded per-particle features
+      jets                 (n, n_jetfeat)     — high-level jet features incl. the
+                                                one-hot labels j_g/j_q/j_w/j_z/j_t
+      jetFeatureNames / particleFeatureNames  — column names (bytes); labels and
+                                                pT columns are located BY NAME
+
+    Constituents are re-sorted by constituent pT (descending) before truncation to
+    n_part, so "top-N" is guaranteed rather than assumed from file ordering.
+
+    Returns: X (N, n_part, 16) float32, Y (N, 5) float32 one-hot, jet_pt (N,) float32.
+    """
+    n_part = n_part or N_PART_PER_JET
+    files = sorted(glob.glob(os.path.join(data_dir, "*.h5")))
+    if not files:
+        raise FileNotFoundError(f"no .h5 files found in {data_dir}")
+
+    def _names(ds):
+        return [n.decode() if isinstance(n, bytes) else str(n) for n in ds]
+
+    Xs, Ys, PTs = [], [], []
+    for fp in files:
+        with h5py.File(fp, "r") as hf:
+            const  = hf["jetConstituentList"][:]
+            jets   = hf["jets"][:]
+            jnames = _names(hf["jetFeatureNames"][:])
+            pnames = _names(hf["particleFeatureNames"][:])
+        missing = [l for l in CLASS_LABELS if l not in jnames]
+        if missing:
+            raise KeyError(f"{fp}: label columns {missing} not in jetFeatureNames={jnames}")
+        lab_idx = [jnames.index(l) for l in CLASS_LABELS]
+
+        # top-n_part by constituent pT (find the pT column by name; padded rows are 0)
+        pt_col = next((i for i, n in enumerate(pnames) if n.endswith("_pt")), None)
+        if pt_col is not None:
+            order = np.argsort(-const[:, :, pt_col], axis=1, kind="stable")
+            const = np.take_along_axis(const, order[:, :, None], axis=1)
+        else:
+            print(f"[data][warn] {os.path.basename(fp)}: no '*_pt' in "
+                  f"particleFeatureNames — keeping stored constituent order")
+        Xs.append(const[:, :n_part, :].astype(np.float32))
+        Ys.append(jets[:, lab_idx].astype(np.float32))
+        jpt = jnames.index("j_pt") if "j_pt" in jnames else None
+        PTs.append(jets[:, jpt].astype(np.float32) if jpt is not None
+                   else np.zeros(len(jets), dtype=np.float32))
+    X, Y, jet_pt = np.concatenate(Xs), np.concatenate(Ys), np.concatenate(PTs)
+    assert X.shape[1:] == (n_part, N_FEAT), f"bad X shape {X.shape}"
+    assert Y.shape[1] == N_CLASSES and np.all(Y.sum(axis=1) == 1.0), \
+        "labels are not one-hot 5-class"
+    print(f"[data] {len(files)} files → X{X.shape}  Y{Y.shape}  "
+          f"class counts: " + ", ".join(f"{c}={int(n)}" for c, n
+                                        in zip(CLASS_LABELS, Y.sum(axis=0))))
+    return X, Y, jet_pt
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TRAINING SCRIPT  (training loop mirrors original train.py)
 # ══════════════════════════════════════════════════════════════════════════════
 
 def main(args):
-    signalTrainFile      = args.SignalTrainFile
-    bkgTrainFile         = args.BkgTrainFile
-    sig_jetData_TrainFile= args.sig_jetData_TrainFile
-    bkg_jetData_TrainFile= args.bkg_jetData_TrainFile
+    train_dir = args.TrainDir
 
     # ── Optional reproducibility seed (BN_SEED) ──────────────────────────────
     # Unset (default) = upstream behaviour: unseeded random init + data shuffle, so repeated
@@ -740,94 +814,29 @@ def main(args):
         _random.seed(_s); np.random.seed(_s); tf.random.set_seed(_s)
         print(f"[seed] BN_SEED={_s}  (python/numpy/tf RNGs fixed for reproducibility)")
 
-    print("Reading signal from "          + signalTrainFile)
-    print("Reading background from "      + bkgTrainFile)
-    print("Reading signal jet data from " + sig_jetData_TrainFile)
-    print("Reading background jet data from " + bkg_jetData_TrainFile)
+    print("Reading HLS4ML LHC Jet (150p) training data from " + train_dir)
 
     # ── Load data ────────────────────────────────────────────────────────────
-    # NRP volume data uses HDF5 keys 'jet_constituents' (particle inputs,
-    # shape [N,141] = 10*14 feats + 1 label col) and 'train_jet_data'
-    # (jet features [N,4] = pT,eta,phi,mass). The upstream repo's dataForge.py
-    # instead writes 'Training Data' / 'Sample Data', so read whichever exists.
-    def _read(path, prefer):
-        with h5py.File(path, "r") as hf:
-            for k in prefer:
-                if k in hf:
-                    return hf[k][:]
-            return hf[list(hf.keys())[0]][:]   # fall back to the sole dataset
+    X, Y, jet_pt = load_hls4ml_jets(train_dir)
 
-    PART_KEYS = ["jet_constituents", "Training Data"]
-    JET_KEYS  = ["train_jet_data",   "Sample Data"]
-    dataset       = _read(signalTrainFile,       PART_KEYS)
-    datasetQCD    = _read(bkgTrainFile,          PART_KEYS)
-    sampleData    = _read(sig_jetData_TrainFile, JET_KEYS)
-    sampleDataQCD = _read(bkg_jetData_TrainFile, JET_KEYS)
+    # Shuffle jets (labels + jet pT stay aligned). Seeded iff BN_SEED is set.
+    idx = np.random.permutation(len(X))
+    X, Y, jet_pt = X[idx], Y[idx], jet_pt[idx]
 
-    dataset    = np.concatenate((dataset, datasetQCD))        # (N, n_part_cols)
-    sampleData = np.concatenate((sampleData, sampleDataQCD))  # (N, n_jet_cols)
-    n_part_cols = dataset.shape[1]                            # 141 = 140 feats + label
-
-    # Shuffle particle rows together with their matching jet features.
-    fullData   = np.concatenate((dataset, sampleData), axis=1)
-    np.random.shuffle(fullData)
-    dataset    = fullData[:, :n_part_cols]                    # particle inputs + label
-    sampleData = fullData[:, n_part_cols:]                    # jet features (pT,eta,phi,mass)
-
-    X = dataset[:, 0 : n_part_cols - 1]
-    y = dataset[:, n_part_cols - 1]
-    X = X.reshape((X.shape[0], N_PART_PER_JET, N_FEAT))
-
-    # ── Impact parameter normalisation knob  (unchanged) ─────────────────────
-    normalizeIPs = False
-    if max(X[:, :, 8].ravel()) < 2.0:
-        norm_b4 = True
-    else:
-        print("\nImpact parameter was not normalized beforehand.\n")
-        norm_b4 = False
-
-    if norm_b4:
-        tag = "bitnet/bitnet_train"
-    elif normalizeIPs:
-        tag = "bitnet/bitnet_Norm"
-        scaler = MinMaxScaler(feature_range=(-1, 1))
-        for feat_idx in [8, 9, 10]:
-            tmp = scaler.fit_transform([[v] for v in X[:, :, feat_idx].ravel()])
-            X[:, :, feat_idx] = tmp.reshape(X[:, :, feat_idx].shape)
-    else:
-        tag = "bitnet/noNorm_train"
-
+    # ── Tag / output naming ───────────────────────────────────────────────────
+    # Kept identical to the old pipeline so downstream tooling (find_model, hls
+    # scripts, roc jobs) still matches "bitnet/noNorm_train_bitnetJetTagModel.h5".
+    # The dataset ships already preprocessed; no extra normalisation is applied.
+    tag = "bitnet/noNorm_train"
     os.makedirs(os.path.dirname(os.getcwd() + f"/{tag}_model.png"),
                 exist_ok=True)
 
-    #plot kinematics
-    from util.plotting.kinematics_plotter import kinematics
-    kinematics(X, sampleData, y, "v1", tag)
-
-    # ── pT-reweighting  (unchanged) ───────────────────────────────────────────
-    thebins    = np.linspace(0,  max(sampleData[:, 0]), 60)
-    bkgPts     = sampleData[y == 0][:, 0]
-    sigPts     = sampleData[y == 1][:, 0]
-    bkg_counts, _ = np.histogram(bkgPts, bins=thebins)
-    sig_counts, _ = np.histogram(sigPts, bins=thebins)
-    total_bkg  = len(bkgPts)
-    total_sig  = len(sigPts)
-    weights_pt = np.nan_to_num(sig_counts / bkg_counts,
-                               nan=total_sig / total_bkg)
-
-    weights    = np.ones(len(y))
-    pt_indices = np.clip(
-        np.digitize(sampleData[:, 0], bins=thebins) - 1, 0, len(weights_pt) - 1
-    )
-    weights[y == 0] = weights_pt[pt_indices][y == 0]
-
-    plt.figure()
-    plt.hist(weights, bins=51)
-    plt.xlabel("Weights")
-    plt.savefig("{}_weights.png".format(tag))
-
-    np.save("{}_bitnetWeights.npy".format(tag),  weights)
-    np.save("{}_ptRange.npy".format(tag),        sampleData[:, 0])
+    # NOTE (2026-07-01 dataset migration): the old binary sig-vs-bkg flat-pT
+    # reweighting and the kinematics_plotter call are dropped — both were wired to
+    # the 2-file signal/background format. The 5-class dataset is trained
+    # unweighted, matching published hls4ml jet-tagging baselines. Jet pT is kept
+    # for reference:
+    np.save("{}_ptRange.npy".format(tag), jet_pt)
 
     # ── Weights & Biases (optional; enabled when WANDB_PROJECT is set) ─────────
     use_wandb = bool(os.environ.get("WANDB_PROJECT"))
@@ -844,8 +853,12 @@ def main(args):
                        "pos_enc": POS_ENC, "pool": POOL, "ffn_act": FFN_ACT,
                        "d_model": D_MODEL, "n_heads": N_HEADS, "n_layers": N_LAYERS,
                        "ffn_dim": FFN_DIM, "l1_reg": L1_REG, "epochs": EPOCHS,
-                       "batch_size": BATCH_SIZE, "n_train": int(len(y)),
-                       "n_signal": int((y == 1).sum()), "n_bkg": int((y == 0).sum())},
+                       "batch_size": BATCH_SIZE, "n_train": int(len(Y)),
+                       "dataset": "hls4ml_lhc_jets_150p",
+                       "n_part": N_PART_PER_JET, "n_feat": N_FEAT,
+                       "n_classes": N_CLASSES,
+                       **{f"n_{c}": int(n) for c, n
+                          in zip(CLASS_LABELS, Y.sum(axis=0))}},
         )
 
     # ── Build model  ──────────────────────────────────────────────────────────
@@ -894,11 +907,16 @@ def main(args):
               + (f" + poly-decay {DECAY_EPOCHS}ep^{DECAY_POWER}" if DECAY_EPOCHS > 0 else ""))
     else:
         optimizer = "adam"
+    # 5-class softmax CE from the raw logits; "auc" is the macro one-vs-rest AUC
+    # (multi_label=True averages per-class AUCs). This is the TRAINING monitor —
+    # the headline ROC-test AUC still comes from make_roc.py on the held-out val/
+    # files (never conflate the two; see decisions.md 2026-06-22).
     model.compile(
-        loss      =tf.keras.losses.BinaryCrossentropy(from_logits=True),
+        loss      = tf.keras.losses.CategoricalCrossentropy(from_logits=True),
         optimizer = optimizer,
-        metrics   = ["binary_accuracy"],
-        weighted_metrics=[tf.keras.metrics.AUC(name="auc")]
+        metrics   = ["categorical_accuracy",
+                     tf.keras.metrics.AUC(name="auc", multi_label=True,
+                                          num_labels=N_CLASSES, from_logits=True)],
     )
 
     # ── Callbacks  ────────────────────────────────────────────────────────────
@@ -930,12 +948,13 @@ def main(args):
         callbacks.append(_WandbEpoch())
 
     # ── Train  ────────────────────────────────────────────────────────────────
+    # validation_split on the train/ files only; the dataset's val/ files stay a
+    # pristine held-out set for the ROC-test evaluation (make_roc.py).
     history = model.fit(
-        X, y,
+        X, Y,
         epochs           = EPOCHS,
         batch_size       = BATCH_SIZE,
         verbose          = 2,
-        sample_weight    = np.asarray(weights),
         validation_split = 0.20,
         callbacks        = callbacks,
     )
@@ -992,15 +1011,17 @@ def sanity_check():
 
     # Shape check
     dummy_x = np.random.randn(8, N_PART_PER_JET, N_FEAT).astype(np.float32)
-    dummy_y = np.random.randint(0, 2, (8, 1)).astype(np.float32)
+    dummy_y = np.eye(N_CLASSES, dtype=np.float32)[
+        np.random.randint(0, N_CLASSES, 8)]                      # one-hot (8, 5)
     out   = model(dummy_x, training=False)
-    assert out.shape == (8, 1), f"Wrong output shape: {out.shape}"
+    assert out.shape == (8, N_CLASSES), f"Wrong output shape: {out.shape}"
 
-    model.compile(loss="binary_crossentropy", optimizer="adam")
+    model.compile(loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+                  optimizer="adam")
     model.train_on_batch(dummy_x, dummy_y)
 
     print(f"\n✓  Input  shape : {dummy_x.shape}")
-    print(f"✓  Output shape : {out.shape}  (raw logit, no sigmoid)")
+    print(f"✓  Output shape : {out.shape}  (raw class logits, no softmax)")
 
     # Check that BitLinear weights are binary after one build
     binary_ok = True
@@ -1037,17 +1058,15 @@ if __name__ == "__main__":
     )
     parser.add_argument("--sanity", action="store_true",
                         help="Run shape/weight sanity check (no data needed)")
-    parser.add_argument("SignalTrainFile",       nargs="?", type=str)
-    parser.add_argument("BkgTrainFile",          nargs="?", type=str)
-    parser.add_argument("sig_jetData_TrainFile", nargs="?", type=str)
-    parser.add_argument("bkg_jetData_TrainFile", nargs="?", type=str)
-  
+    parser.add_argument("TrainDir", nargs="?", type=str,
+                        help="directory of jetImage_*_150p_*.h5 training files "
+                             "(NRP: /data/hls4ml_lhc_jet/train/train)")
+
     args = parser.parse_args()
 
     if args.sanity:
         sanity_check()
     else:
-        if not all([args.SignalTrainFile, args.BkgTrainFile,
-                    args.sig_jetData_TrainFile, args.bkg_jetData_TrainFile]):
-            parser.error("Provide all four data file arguments, or use --sanity")
+        if not args.TrainDir:
+            parser.error("Provide the training data directory, or use --sanity")
         main(args)

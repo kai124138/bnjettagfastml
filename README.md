@@ -23,6 +23,22 @@ This README is the map. **All paths below are relative to this folder.**
 **Cost of going 1-bit:** −1.7 AUC points vs FP32 (0.7530 vs 0.7703) for, in firmware, **0 DSP** on the binary
 core — exact, precision-independent, and now **confirmed by real Vitis C-synthesis** (see hls table).
 
+> **UPDATE (round-4, 2026-06-28 — verified from PVC logs):** the lr15 recipe (peak LR 1.5e-4) behind every
+> number in this table was **too hot**. At peak LR 5e-5 the same W1A8 model reaches **val AUC 0.7672**
+> (+0.0142, single run — seed-confirm + tuned A6/A4 + LR-tuned FP32/W8A8 baselines are **round-5**,
+> `code/jobs/training/variants/kai-bn5-*`). This table stays as the reproducible lr15 anchor until round-5
+> lands; the tuned story so far is in `results/variant_sweep.md`. As always these are *validation* AUC, not
+> ROC-test (re-eval job: `code/jobs/training/kai-roc-r5.yaml`).
+
+> **DATASET MIGRATION (2026-07-01):** all training going forward uses the public **HLS4ML LHC Jet
+> dataset (150 particles)** (Zenodo; arXiv:1804.06913 + 1908.05318), on the kai-data PVC at
+> `/data/hls4ml_lhc_jet/` — **5-class g/q/W/Z/t**, top-10 constituents by pT (high→low) × 16
+> features (160 inputs; input-size vs latency/resources is a later study via `BN_N_PART`),
+> held-out val/ split as the ROC-test set. Round-5 is the first round on the new data, so its
+> numbers start a **fresh macro-OvR-AUC table**: nothing in the table above (old private 2-file
+> dataset, binary sig-vs-bkg) is comparable to any post-migration number. Rationale + full
+> consequence list: `.claude/memory/decisions.md` (2026-07-01).
+
 **hls4ml firmware → SYNTHESIZED (Vitis HLS 2023.2, run 2026-06-24 on `mulder`):** binary weights type as
 `ap_uint<1>` → **DSP = 0 at A8/A6/A4, confirmed in synthesis** (the central claim, in silicon estimates). At the
 folded device-fit operating point (RF=256) the binary FFN fits a VU13P at **~25% LUT / ~7% FF / ~1.2% BRAM /
