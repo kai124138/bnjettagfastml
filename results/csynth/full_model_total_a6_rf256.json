@@ -1,0 +1,76 @@
+[
+  {
+    "precision": "A6",
+    "n_bitlinear_instances": 51,
+    "full_model_total": {
+      "LUT": 8680426,
+      "FF": 8545402,
+      "DSP": 1049,
+      "BRAM_18K": 778
+    },
+    "breakdown": [
+      {
+        "shape": "14->256",
+        "rep": "input_proj",
+        "members": [
+          "input_proj"
+        ],
+        "instances": 1,
+        "per_instance_LUT": 25807,
+        "per_instance_FF": 48515,
+        "per_instance_DSP": 11
+      },
+      {
+        "shape": "256->256",
+        "rep": "attn_Wq",
+        "members": [
+          "attn_Wq",
+          "attn_Wk",
+          "attn_Wv",
+          "attn_Wo",
+          "head_fc1"
+        ],
+        "instances": 33,
+        "per_instance_LUT": 118121,
+        "per_instance_FF": 115545,
+        "per_instance_DSP": 15
+      },
+      {
+        "shape": "256->1024",
+        "rep": "ffn_fc1",
+        "members": [
+          "ffn_fc1"
+        ],
+        "instances": 8,
+        "per_instance_LUT": 171113,
+        "per_instance_FF": 162393,
+        "per_instance_DSP": 15
+      },
+      {
+        "shape": "1024->256",
+        "rep": "ffn_fc2",
+        "members": [
+          "ffn_fc2"
+        ],
+        "instances": 8,
+        "per_instance_LUT": 410900,
+        "per_instance_FF": 410596,
+        "per_instance_DSP": 51
+      },
+      {
+        "shape": "256->1",
+        "rep": "head_fc2",
+        "members": [
+          "head_fc2"
+        ],
+        "instances": 1,
+        "per_instance_LUT": 100522,
+        "per_instance_FF": 99990,
+        "per_instance_DSP": 15
+      }
+    ],
+    "ReuseFactor": 256,
+    "part": "xcvu13p-flga2577-2-e",
+    "note": "Sum over 51 BitLinear layers. The binary QDense MATMUL core is DSP-FREE (weights -> ap_uint<1> -> XNOR/popcount on LUTs); per-instance csynth confirms every DSP sits inside the layernorm_1d module (real-valued variance Sx^2 + inv-sqrt at fixed<32,16>), NOT the matmul. So full_model_total['DSP'] is entirely the 51 SubLN normalizers (~11-15 DSP each); narrowing LN precision trades DSP for accuracy (default-narrow LN measured corr~0.87 vs fixed<32,16> corr~0.9998). Attention QK^T/softmax/AV score core (0.65% of MACs, no weights) not included (EinsumDense unsupported on this hls4ml; handled in resource_model.log)."
+  }
+]

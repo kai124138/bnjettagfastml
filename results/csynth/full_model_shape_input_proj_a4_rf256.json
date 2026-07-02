@@ -1,0 +1,18 @@
+{
+  "shape": "14->256",
+  "rep_component": "input_proj",
+  "precision": "A4",
+  "beta_representative": 0.06633547110652924,
+  "in_dim": 14,
+  "out_dim": 256,
+  "BRAM_18K": "1",
+  "DSP": "11",
+  "FF": "48313",
+  "LUT": "25689",
+  "LatencyCyclesWorst": "299",
+  "LatencyCyclesBest": "298",
+  "IntervalII": "224",
+  "ReuseFactor": 256,
+  "part": "xcvu13p-flga2577-2-e",
+  "clock_ns": 2.5
+}

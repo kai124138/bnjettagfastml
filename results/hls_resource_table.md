@@ -168,23 +168,56 @@ transformer's DSP toward 0; flagged as future work.
 
 **Composed full-model resource (fully-spatial sum of all 51 BitLinear instances):**
 
-| | DSP | LUT | FF | BRAM_18K |
+| precision | DSP | LUT | FF | BRAM_18K |
 | --- | --- | --- | --- | --- |
-| full-model total | **1,049** | 8,912,618 | 8,712,392 | 778 |
-| % of one VU13P   | **8.5 %** | **515.8 %** | **252.1 %** | **14.5 %** |
+| **A8** total     | **1,049** | 8,912,618 | 8,712,392 | 778 |
+| A8 % of one VU13P | **8.5 %** | 515.8 % | 252.1 % | 14.5 % |
+| **A6** total     | **1,049** | 8,680,426 | 8,545,402 | 778 |
+| A6 % of one VU13P | **8.5 %** | 502.3 % | 247.3 % | 14.5 % |
+| **A4** total     | **1,049** | 8,594,614 | 8,324,652 | 778 |
+| A4 % of one VU13P | **8.5 %** | 497.4 % | 240.9 % | 14.5 % |
+
+(Device totals used: LUT 1,728,000 · FF 3,456,000 · DSP 12,288 · BRAM_18K 5,376. DSP is **identical (1,049)** at all
+three activation precisions — it is 100 % LayerNorm at fixed<32,16>, structurally independent of A8/A6/A4. LUT/FF fall
+monotonically as activations narrow, A8 ≥ A6 ≥ A4, but only modestly, since the binary matmul XNOR/popcount logic
+dominates area and is itself weight-driven, not activation-driven.)
 
 **Honest reading of the composition.** This total is the **fully-spatial** sum — every one of the 51 layers
 instantiated as its own pipelined module. At 6.37 M parameters that does **not** fit one VU13P (LUT 5.2×, FF 2.5×):
 a fully-spatial transformer of this size is a multi-FPGA or heavily-folded design. The **measured, trustworthy**
 numbers are the **per-shape rows** above; a deployable design reuses the **8 identical transformer blocks
 temporally** (instantiate ~one block + input_proj + head, loop over depth/tokens), collapsing the ×33/×8/×8
-multiplicities and bringing LUT/FF back on-chip. End-to-end *latency* is likewise a streamed assembly of the
-per-shape pipelines (not one synthesized number) — quoted per-shape above. What is **fold-independent and proven**
+multiplicities and bringing LUT/FF back on-chip. What is **fold-independent and proven**
 is the structural result: **binary matmul = 0 DSP; 100 % of DSP = LayerNorm.**
 
-*(A6/A4 sweep running on `mulder` as of 2026-06-26; DSP is precision-independent so the A6/A4 totals will match
-**1,049 DSP** with modestly smaller LUT/FF — backfilled when complete. A8 raw:
-`results/csynth/full_model_shape_*_a8_rf256.json`; composed total `results/csynth/full_model_total_a8_rf256.json`.)*
+**Composed whole-model latency (fully-spatial streamed upper bound).** End-to-end latency was not synthesized as one
+number (the model was C-synthesized per-shape); we *compose* it as the sum of per-stage `LatencyCyclesWorst` along the
+model's **longest sequential (critical) path**, counting the three parallel attention projections Wq/Wk/Wv **once**.
+Per-shape worst-case cycles (RF=256, precision-independent — identical across A8/A6/A4):
+input_proj **299**, 256→256 proj (attn / head_fc1) **679**, ffn_fc1 **679**, ffn_fc2 **682**, head_fc2 **679**.
+
+| stage | worst-case cycles |
+| --- | --- |
+| input_proj (14→256)                                    | 299 |
+| per transformer block = QKV(‖, ×1) 679 + Wo 679 + ffn_fc1 679 + ffn_fc2 682 | **2,719** |
+| × 8 blocks                                             | 21,752 |
+| head_fc1 (256→256)                                     | 679 |
+| head_fc2 (256→1)                                       | 679 |
+| **whole-model critical path**                          | **23,409 cycles** |
+
+At the **2.5 ns / 400 MHz target** that is **≈ 58.5 µs** per single inference; at the actually-achieved ~1.90 ns/layer
+clock (all shapes meet 2.5 ns except `input_proj`, which closes at 3.71 ns) it is **≈ 44.5 µs**. This is the
+**fully-spatial streamed *upper bound* on single-inference latency** — a composition, not one synthesis run. Two honest
+caveats: (i) the weightless attention score core (QKᵀ / softmax / AV) was **not** synthesized (EinsumDense unsupported
+on this hls4ml); it is **excluded** here — being weightless and only 0.65 % of the model's MACs it does not change the
+order of magnitude, though a real design adds a small streamed cost per block; (ii) a **folded / temporally-reused**
+design (one block looped over depth) trades latency *up* for area *down* — the number above is the low-latency,
+high-area extreme, consistent with the fully-spatial totals in the table above.
+
+*(A6/A4 sweep on `mulder`, completed 2026-06-26 19:55: **DONE**. DSP = **1,049 at both A6 and A4**, identical to A8,
+confirming DSP is precision-independent (100 % LayerNorm); LUT/FF are modestly lower than A8 and monotone A8 ≥ A6 ≥ A4.
+Raw: `results/csynth/full_model_total_a{8,6,4}_rf256.json`, per-shape `results/csynth/full_model_shape_*_a{8,6,4}_rf256.json`,
+combined `results/csynth/full_model_shapes_a{8,6,4}_rf256.json`.)*
 
 ---
 
