@@ -54,7 +54,14 @@ Published points (research log 2026-07-02; metrics/inputs differ — noted):
 | hls4ml/HGQ FCNN line (HGQ-1…HGQ-6, arXiv:2405.00645, XCVU9P) | 16 jet-level feats | mixed (HGQ-learned) | LUT 0.02–0.53 %, DSP 0–0.5 %, 10–30 ns | acc 71.0–76.4 % |
 | Sub-µs transformers (arXiv:2510.24784, XCU250) | ≤64 particles × 3 feats | HGQ-trained, **EBOPs target 350,000** | LUT 47k–202k, DSP 0, 44–78 ns | acc 77.9–79.8 % |
 | JEDI-net (arXiv:1908.05318) | constituents, interaction net | FP32 (no FPGA impl) | ~34k params | per-class AUC 0.93–0.97 |
-| **BNJetTag W1A8 large (ours)** | 10 particles × 16 feats | binary weights, A8 | **EBOPs 530.4M**, folded FFN ≈25 % VU13P LUT, DSP=0 core | era-2 AUC pending (round-5 ROC) |
+| **BNJetTag W1A8 large (ours)** | 10 particles × 16 feats | binary weights, A8 | **EBOPs 530.4M**, folded FFN ≈25 % VU13P LUT, DSP=0 core | **macro-OvR AUC 0.8501** (seed-avg, ROC-test, verified 2026-07-03) |
+
+*(Era-2 accuracy landed 2026-07-03 — the full quantization × accuracy picture, all ROC-test
+macro-OvR, seed-averaged for binary rows: FP32 0.8765 · W8A8 0.8642 · W1A8 0.8501 · W1A6
+0.8307 · W1A4 0.7329. Read together with §2: the binary trade on this dataset is
+**−1.41 macro-AUC pts vs W8A8 for 7.65× fewer EBOPs**; A6 pays another −1.94 pts for 1.35×;
+A4's further 1.52× EBOPs saving costs a catastrophic −9.78 pts — the cliff. Source:
+`roc-results/r5/roc_auc.md`, verified per experiment-log 2026-07-03.)*
 
 Honest positioning (framing, not spin):
 
