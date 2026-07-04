@@ -20,6 +20,13 @@ Running log of every consequential change in this effort. Dated, newest on top.
 - Still in flight on mulder: probe_attn_core_rf1 (attention core, heavy elaboration),
   probe_bitlinear_{v3lat,a6lat,a4lat}_rf256 (Latency elaboration of 65k-MAC layers is
   known-slow; the head_fc2 probe already settles the DSP question at small shape).
+- **UPDATE (late evening): probe_bitlinear_v3lat_rf256 FAILED after 4 h** —
+  `HLS 200-1715 problem during source synthesis`: Vitis frontend crash on the
+  fully-unrolled 65k-MAC Latency dense (the documented big-shape intractability).
+  Negative result recorded in constraints_map.md ("Latency at big shapes" row):
+  small shapes → Latency/DSP-0 verified; big shapes → Resource + (future) true 1-bit
+  weight-type emission, or quote the QKeras-path per-shape DSP-0 numbers. a6lat/a4lat
+  (same design, narrower) left running — likely same fate; attn_core still elaborating.
 
 ## 2026-07-04 — session close: verified state + what's in flight
 - **Results-analyst verification PASS** (experiment-log 2026-07-04 ✓): all 27 core
