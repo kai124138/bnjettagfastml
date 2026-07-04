@@ -1,0 +1,54 @@
+{
+ "a428e6e2": {
+  "config_path": "qkeras-bitnet-run-2026-06-22/code/hgq2/configs/era2-large-w1a6.json",
+  "name": "era2-large-w1a6",
+  "stages": {
+   "build": {
+    "file": "runs/a428e6e2/build.json",
+    "written": "2026-07-04T04:39:24"
+   },
+   "calibrate": {
+    "file": "runs/a428e6e2/calibrate.json",
+    "written": "2026-07-04T04:39:21"
+   },
+   "extract": {
+    "file": "runs/a428e6e2/extract.json",
+    "written": "2026-07-04T04:36:15"
+   }
+  }
+ },
+ "b224a8ea": {
+  "config_path": "qkeras-bitnet-run-2026-06-22/code/hgq2/configs/era2-large-w1a8.json",
+  "name": "era2-large-w1a8",
+  "stages": {
+   "build": {
+    "file": "runs/b224a8ea/build.json",
+    "written": "2026-07-04T04:39:24"
+   },
+   "calibrate": {
+    "file": "runs/b224a8ea/calibrate.json",
+    "written": "2026-07-04T04:39:16"
+   },
+   "extract": {
+    "file": "runs/b224a8ea/extract.json",
+    "written": "2026-07-04T04:42:25"
+   },
+   "probe_attn_core": {
+    "file": "runs/b224a8ea/probe_attn_core.json",
+    "written": "2026-07-04T04:37:45"
+   },
+   "probe_bitlinear": {
+    "file": "runs/b224a8ea/probe_bitlinear.json",
+    "written": "2026-07-04T04:30:39"
+   },
+   "probe_subln": {
+    "file": "runs/b224a8ea/probe_subln.json",
+    "written": "2026-07-04T03:50:51"
+   },
+   "verify": {
+    "file": "runs/b224a8ea/verify.json",
+    "written": "2026-07-04T04:34:41"
+   }
+  }
+ }
+}

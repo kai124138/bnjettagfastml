@@ -53,13 +53,18 @@ def convert(model, cfg: dict, out_dir: str, rf: int | None = None,
             # compile() re-writes the project and undoes the patch
             patch_project_for_macos(out_dir)
         hm._compile()
-        y_hls = hm.predict(np.ascontiguousarray(csim_X.astype(np.float32)))
+        if isinstance(csim_X, (list, tuple)):
+            xs = [np.ascontiguousarray(x.astype(np.float32)) for x in csim_X]
+        else:
+            xs = np.ascontiguousarray(csim_X.astype(np.float32))
+        y_hls = hm.predict(xs)
         ref = keras_ref if keras_ref is not None else np.asarray(
             model(csim_X, training=False))
         y_hls = y_hls.reshape(ref.shape)
         d = np.abs(y_hls - ref)
+        n_csim = len(csim_X[0]) if isinstance(csim_X, (list, tuple)) else len(csim_X)
         report["csim"] = {
-            "n": int(len(csim_X)),
+            "n": int(n_csim),
             "max_abs_diff": float(d.max()),
             "mean_abs_diff": float(d.mean()),
             "bit_exact": bool(d.max() == 0.0),

@@ -25,6 +25,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from bnhgq2.config import load_config, cfg_hash, resolve, PROJECT_ROOT  # noqa: E402
 from bnhgq2 import store  # noqa: E402
+from bnhgq2.compat import apply_keras_compat  # noqa: E402
+
+apply_keras_compat()  # keras-3.15 EinsumDense.full_output_shape (EBOPs needs it)
 
 
 def _run_dir(h):
@@ -78,6 +81,19 @@ def stage_calibrate(cfg, h, ctx):
     gm = GoldModel(cfg, ctx["binz"], ctx["ck"]["pos_encoding"],
                    mode="static", beta_mode="fold_csd2")
     calib = gm.calibrate(Xc, policy="mse_per_channel")
+    # per-block score ranges for the softmax exp-table grid (v2 fix: QSoftmax
+    # defaults are WRAP/uncalibrated); taps run with the final calib active
+    gm.calib = calib
+    gm.forward(Xc[:2048], taps=True)
+    for li in range(cfg["arch"]["n_layers"]):
+        blk = f"bit_block_{li}"
+        # gold taps hold SCALED scores; the exp-table grid sees raw QK^T
+        raw_max = float(np.abs(gm._taps[f"{blk}_scores"]).max() / gm.score_scale(blk))
+        calib[f"__scores_max_{blk}"] = raw_max
+        # Q/K/V stream ranges for the exact-passthrough einsum input grids
+        for w in ("Wq", "Wk", "Wv"):
+            calib[f"__stream_max_{blk}_attn_{w}"] = \
+                float(np.abs(gm._taps[f"{blk}_attn_{w}"]).max())
     np.savez(os.path.join(_run_dir(h), "calib.npz"),
              **{k: np.asarray(v) for k, v in calib.items()})
     ctx["calib"] = calib

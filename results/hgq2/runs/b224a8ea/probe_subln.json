@@ -1,0 +1,21 @@
+{
+ "config_name": "era2-large-w1a8",
+ "config_hash": "b224a8ea",
+ "stage": "probe_subln",
+ "written": "2026-07-04T03:50:51",
+ "payload": {
+  "output_dir": "/Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/results/hgq2/runs/b224a8ea/probe_subln_rf1",
+  "rf": 1,
+  "strategy": "Latency",
+  "backend": "Vitis",
+  "csim": {
+   "n": 512,
+   "max_abs_diff": 0.0004930496215820312,
+   "mean_abs_diff": 7.719334098510444e-05,
+   "bit_exact": false,
+   "corr": 0.9999999973001209
+  },
+  "tarball": "/Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/results/hgq2/runs/b224a8ea/probe_subln_rf1.tar.gz",
+  "probe": "subln"
+ }
+}

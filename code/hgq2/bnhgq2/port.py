@@ -43,6 +43,8 @@ def port_weights(model, cfg: dict, binz: dict, pe: np.ndarray):
     n_set = 0
     for layer in model.layers:
         nm = layer.name
+        if nm not in binz or nm.startswith("_"):
+            continue  # norm/softmax/einsum/add layers carry no ported weights
         if nm == "input_proj":
             bias_table = b(nm)[None, :] + pe.astype(np.float32)  # (T,D)
             _assign(layer, q(nm), bias_table)
@@ -69,7 +71,9 @@ def _assign(layer, kernel, bias):
         raise ValueError(f"{layer.name}: kernel shape {tuple(ker_var.shape)} != {kernel.shape}")
     ker_var.assign(kernel)
     if bias is not None:
-        bias_var = getattr(layer, "_bias", None) or layer.bias
+        bias_var = getattr(layer, "_bias", None)
+        if bias_var is None:
+            bias_var = layer.bias
         bias_var.assign(bias.reshape(tuple(bias_var.shape)))
 
 

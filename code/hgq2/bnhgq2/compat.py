@@ -33,6 +33,11 @@ from pathlib import Path
 _STD_COMPLEX_FWD = re.compile(r'namespace std \{\s*template\s*<\s*typename _Tp\s*>\s*class complex;\s*\}')
 
 
+def apply_keras_compat() -> None:
+    """Keras-level shims only (no hls4ml import) — EBOPs/tracing needs these too."""
+    _patch_einsum_dense_full_output_shape()
+
+
 def apply_hls4ml_compat() -> None:
     """Apply all in-process shims. Idempotent."""
     _patch_einsum_dense_full_output_shape()

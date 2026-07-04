@@ -98,6 +98,58 @@ def build_hgq2_model(cfg: dict, binz: dict, calib: dict, enable_ebops: bool = Tr
         v = calib[name]
         return int(np.max(v))
 
+    def _dl(k0, i0_, f0_):
+        from hgq.quantizer import QuantizerConfig
+        return QuantizerConfig("kif", "datalane", k0=k0, i0=int(i0_), f0=int(f0_),
+                               round_mode="RND_CONV", overflow_mode="SAT",
+                               trainable=False, heterogeneous_axis=(),
+                               homogeneous_axis=None,
+                               ic=None, fc=None, ir=None, fr=None)
+
+    def stream_iq(name):
+        """Exact-passthrough grid for an internal integer-grid stream (Q/K/V):
+        values are multiples of 2^-(act_bits-1) with |v| ≤ calibrated max —
+        the frozen SAT grid contains them exactly, so quantization is identity.
+        (Workaround for hgq 0.1.9's broken enable_iq=False on multi-input layers.)"""
+        import os
+        margin = 1 + int(os.environ.get("BNHGQ2_STREAM_MARGIN", "0"))  # ablation knob
+        smax = float(calib.get(f"__stream_max_{name}", 512.0))
+        i_ = int(np.ceil(np.log2(max(smax, 1.0) + 1e-9))) + margin  # SAT guards the tail
+        act_bits = cfg["quant"]["act_bits"]
+        return _dl(1, i_, act_bits - 1)
+
+    def attn_grid():
+        """softmax outputs: products of two ≤11-fraction-bit table values —
+        f0=22 holds them exactly."""
+        return _dl(0, 1, 22)
+
+    def softmax_confs(blk):
+        """Frozen SAT table grids for QSoftmax (defaults are WRAP+uncalibrated —
+        the silent-garbage trap found in v1). exp input = max−scores ∈ [0, 2·max];
+        grid ~10 total bits with i from calibrated |scores| max (f may be negative:
+        coarse-but-covering, score GAPS are O(σ) ≫ step). inv input = Σexp ∈ [1, T]."""
+        import os
+        from hgq.quantizer import QuantizerConfig
+        extra = int(os.environ.get("BNHGQ2_SM_EXTRA", "0"))  # ablation knob
+        smax = float(calib.get(f"__scores_max_{blk}", 4096.0))
+        i_exp = int(np.ceil(np.log2(max(smax, 1.0) + 1e-9))) + 1  # cover 2·max
+        f_exp = 10 + extra - i_exp
+        mk = lambda k0, i0_, f0_: QuantizerConfig(
+            "kif", "datalane", k0=k0, i0=i0_, f0=f0_,
+            round_mode="RND_CONV", overflow_mode="SAT",
+            trainable=False, heterogeneous_axis=(), homogeneous_axis=None,
+            ic=None, fc=None, ir=None, fr=None)
+        mk_t = lambda i0_, f0_: QuantizerConfig(
+            "kif", "table", k0=0, i0=i0_, f0=f0_,
+            round_mode="RND_CONV", overflow_mode="SAT", trainable=False,
+            ic=None, fc=None, ir=None, fr=None)
+        return {
+            "exp_iq_conf": mk(0, i_exp, f_exp),
+            "inv_iq_conf": mk(0, 4, 8 + extra),   # Σexp ∈ [1, T]; 4096-entry inv table
+            "exp_oq_conf": mk_t(1, 11 + extra),   # exp values ∈ (0, 1]
+            "inv_oq_conf": mk_t(1, 11 + extra),   # 1/Σ ∈ (0, 1]
+        }
+
     with LayerConfigScope(enable_ebops=enable_ebops, beta0=0.0):
         x_in = keras.Input((T, F), name="input_1")
 
@@ -125,12 +177,20 @@ def build_hgq2_model(cfg: dict, binz: dict, calib: dict, enable_ebops: bool = Tr
                              iq_conf=act_q(i0(f"{blk}_attn_Wv")),
                              kq_conf=kq(f"{blk}_attn_Wv"),
                              name=f"{blk}_attn_Wv")(ln)
-            scores = QEinsum("bthe,bshe->bhts", name=f"{blk}_attn_scores")([q, k])
+            # act×act einsums: exact-passthrough input grids (the trained model
+            # holds scores/ctx in float; real quantization happens at the softmax
+            # table grids and the next layer's iq)
+            scores = QEinsum("bthe,bshe->bhts",
+                             iq_confs=[stream_iq(f"{blk}_attn_Wq"),
+                                       stream_iq(f"{blk}_attn_Wk")],
+                             name=f"{blk}_attn_scores")([q, k])
             sscale = (binz[f"{blk}_attn_Wq"]["beta"] * binz[f"{blk}_attn_Wk"]["beta"]
                       / float(np.sqrt(E)))
             attn = QSoftmax(axis=-1, stable=True, input_scaler=float(sscale),
-                            name=f"{blk}_attn_softmax")(scores)
-            ctx = QEinsum("bhts,bshe->bthe", name=f"{blk}_attn_ctx")([attn, v])
+                            name=f"{blk}_attn_softmax", **softmax_confs(blk))(scores)
+            ctx = QEinsum("bhts,bshe->bthe",
+                          iq_confs=[attn_grid(), stream_iq(f"{blk}_attn_Wv")],
+                          name=f"{blk}_attn_ctx")([attn, v])
             ctx = PSubLN(flatten_axes=2, name=f"ln_{blk}_attn_Wo")(ctx)
             wo = QEinsumDense("bthe,hed->btd", output_shape=(T, D), bias_axes="d",
                               iq_conf=act_q(i0(f"{blk}_attn_Wo")),
@@ -153,7 +213,7 @@ def build_hgq2_model(cfg: dict, binz: dict, calib: dict, enable_ebops: bool = Tr
             h = keras.layers.Add(name=f"{blk}_add_ffn")([h, f2])
 
         # ---- head ----
-        h = QGlobalAveragePooling1D(name="gap")(h)
+        h = QGlobalAveragePooling1D(enable_iq=False, name="gap")(h)
         h = PSubLN(name="ln_head_fc1")(h)
         h = QDense(D, use_bias=True,
                    iq_conf=act_q(i0("head_fc1")), kq_conf=kq("head_fc1"),

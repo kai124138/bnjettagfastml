@@ -1,0 +1,344 @@
+{
+ "config_name": "era2-large-w1a6",
+ "config_hash": "a428e6e2",
+ "stage": "calibrate",
+ "written": "2026-07-04T04:39:21",
+ "payload": {
+  "policy": "mse_per_channel",
+  "n_calib": 8192,
+  "i_range_per_site": {
+   "input_proj": [
+    0,
+    2
+   ],
+   "bit_block_0_attn_Wq": [
+    0,
+    2
+   ],
+   "bit_block_0_attn_Wk": [
+    0,
+    2
+   ],
+   "bit_block_0_attn_Wv": [
+    0,
+    2
+   ],
+   "bit_block_0_attn_Wo": [
+    0,
+    2
+   ],
+   "bit_block_0_ffn_fc1": [
+    0,
+    2
+   ],
+   "bit_block_0_ffn_fc2": [
+    0,
+    3
+   ],
+   "bit_block_1_attn_Wq": [
+    0,
+    2
+   ],
+   "bit_block_1_attn_Wk": [
+    0,
+    2
+   ],
+   "bit_block_1_attn_Wv": [
+    0,
+    2
+   ],
+   "bit_block_1_attn_Wo": [
+    0,
+    2
+   ],
+   "bit_block_1_ffn_fc1": [
+    0,
+    2
+   ],
+   "bit_block_1_ffn_fc2": [
+    0,
+    3
+   ],
+   "bit_block_2_attn_Wq": [
+    0,
+    2
+   ],
+   "bit_block_2_attn_Wk": [
+    0,
+    2
+   ],
+   "bit_block_2_attn_Wv": [
+    0,
+    2
+   ],
+   "bit_block_2_attn_Wo": [
+    1,
+    2
+   ],
+   "bit_block_2_ffn_fc1": [
+    1,
+    2
+   ],
+   "bit_block_2_ffn_fc2": [
+    0,
+    3
+   ],
+   "bit_block_3_attn_Wq": [
+    1,
+    2
+   ],
+   "bit_block_3_attn_Wk": [
+    1,
+    2
+   ],
+   "bit_block_3_attn_Wv": [
+    1,
+    2
+   ],
+   "bit_block_3_attn_Wo": [
+    0,
+    2
+   ],
+   "bit_block_3_ffn_fc1": [
+    0,
+    2
+   ],
+   "bit_block_3_ffn_fc2": [
+    0,
+    3
+   ],
+   "bit_block_4_attn_Wq": [
+    0,
+    2
+   ],
+   "bit_block_4_attn_Wk": [
+    0,
+    2
+   ],
+   "bit_block_4_attn_Wv": [
+    0,
+    2
+   ],
+   "bit_block_4_attn_Wo": [
+    0,
+    3
+   ],
+   "bit_block_4_ffn_fc1": [
+    0,
+    2
+   ],
+   "bit_block_4_ffn_fc2": [
+    0,
+    3
+   ],
+   "bit_block_5_attn_Wq": [
+    0,
+    2
+   ],
+   "bit_block_5_attn_Wk": [
+    0,
+    2
+   ],
+   "bit_block_5_attn_Wv": [
+    0,
+    2
+   ],
+   "bit_block_5_attn_Wo": [
+    0,
+    3
+   ],
+   "bit_block_5_ffn_fc1": [
+    0,
+    2
+   ],
+   "bit_block_5_ffn_fc2": [
+    0,
+    3
+   ],
+   "bit_block_6_attn_Wq": [
+    0,
+    2
+   ],
+   "bit_block_6_attn_Wk": [
+    0,
+    2
+   ],
+   "bit_block_6_attn_Wv": [
+    0,
+    2
+   ],
+   "bit_block_6_attn_Wo": [
+    0,
+    2
+   ],
+   "bit_block_6_ffn_fc1": [
+    0,
+    2
+   ],
+   "bit_block_6_ffn_fc2": [
+    0,
+    3
+   ],
+   "bit_block_7_attn_Wq": [
+    0,
+    2
+   ],
+   "bit_block_7_attn_Wk": [
+    0,
+    2
+   ],
+   "bit_block_7_attn_Wv": [
+    0,
+    2
+   ],
+   "bit_block_7_attn_Wo": [
+    0,
+    2
+   ],
+   "bit_block_7_ffn_fc1": [
+    0,
+    2
+   ],
+   "bit_block_7_ffn_fc2": [
+    0,
+    3
+   ],
+   "head_fc1": [
+    0,
+    2
+   ],
+   "head_fc2": [
+    0,
+    2
+   ],
+   "__scores_max_bit_block_0": [
+    119846,
+    119846
+   ],
+   "__stream_max_bit_block_0_attn_Wq": [
+    181,
+    181
+   ],
+   "__stream_max_bit_block_0_attn_Wk": [
+    102,
+    102
+   ],
+   "__stream_max_bit_block_0_attn_Wv": [
+    60,
+    60
+   ],
+   "__scores_max_bit_block_1": [
+    41531,
+    41531
+   ],
+   "__stream_max_bit_block_1_attn_Wq": [
+    112,
+    112
+   ],
+   "__stream_max_bit_block_1_attn_Wk": [
+    85,
+    85
+   ],
+   "__stream_max_bit_block_1_attn_Wv": [
+    68,
+    68
+   ],
+   "__scores_max_bit_block_2": [
+    50399,
+    50399
+   ],
+   "__stream_max_bit_block_2_attn_Wq": [
+    121,
+    121
+   ],
+   "__stream_max_bit_block_2_attn_Wk": [
+    85,
+    85
+   ],
+   "__stream_max_bit_block_2_attn_Wv": [
+    73,
+    73
+   ],
+   "__scores_max_bit_block_3": [
+    64649,
+    64649
+   ],
+   "__stream_max_bit_block_3_attn_Wq": [
+    115,
+    115
+   ],
+   "__stream_max_bit_block_3_attn_Wk": [
+    105,
+    105
+   ],
+   "__stream_max_bit_block_3_attn_Wv": [
+    69,
+    69
+   ],
+   "__scores_max_bit_block_4": [
+    83218,
+    83218
+   ],
+   "__stream_max_bit_block_4_attn_Wq": [
+    128,
+    128
+   ],
+   "__stream_max_bit_block_4_attn_Wk": [
+    103,
+    103
+   ],
+   "__stream_max_bit_block_4_attn_Wv": [
+    78,
+    78
+   ],
+   "__scores_max_bit_block_5": [
+    59543,
+    59543
+   ],
+   "__stream_max_bit_block_5_attn_Wq": [
+    107,
+    107
+   ],
+   "__stream_max_bit_block_5_attn_Wk": [
+    97,
+    97
+   ],
+   "__stream_max_bit_block_5_attn_Wv": [
+    84,
+    84
+   ],
+   "__scores_max_bit_block_6": [
+    75478,
+    75478
+   ],
+   "__stream_max_bit_block_6_attn_Wq": [
+    135,
+    135
+   ],
+   "__stream_max_bit_block_6_attn_Wk": [
+    133,
+    133
+   ],
+   "__stream_max_bit_block_6_attn_Wv": [
+    72,
+    72
+   ],
+   "__scores_max_bit_block_7": [
+    67077,
+    67077
+   ],
+   "__stream_max_bit_block_7_attn_Wq": [
+    114,
+    114
+   ],
+   "__stream_max_bit_block_7_attn_Wk": [
+    96,
+    96
+   ],
+   "__stream_max_bit_block_7_attn_Wv": [
+    81,
+    81
+   ]
+  }
+ }
+}

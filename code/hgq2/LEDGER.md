@@ -2,6 +2,28 @@
 
 Running log of every consequential change in this effort. Dated, newest on top.
 
+## 2026-07-04 — A8 rebuild VERIFIED end-to-end (keras side) + first real csynth
+- **v1 → v3 debug trail** (each a real measured failure):
+  v1 gate1 AUC 0.500 (garbage) — root cause: every unconfigured HGQ2 datalane
+  quantizer defaults to WRAP+uncalibrated (QEinsum inputs, QSoftmax exp/inv grids,
+  QGAP). v2 fix (explicit frozen SAT grids + QSoftmax table configs) hit an
+  UPSTREAM hgq 0.1.9 bug: `enable_iq=False` crashes multi-input layers
+  (`_iqs_confs` typo in QLayerBaseMultiInputs.__init__). v3 workaround: exact-
+  passthrough frozen grids on the einsum streams (identity on the integer grid,
+  EBOPs stays live) + per-block calibrated score/stream ranges.
+- **v3 verify (era2-large-w1a8, full 260k val)**: gate1 HGQ2↔trained corr 0.9578,
+  macro-AUC **0.84868 vs ref 0.85510 (Δ −0.0064)** — right at the gold-model
+  prediction (0.8475). gate2 HGQ2↔gold corr 0.9937 — residual attributed to the
+  table-based softmax vs gold's exact float softmax (ablation pending).
+- **First csynth on mulder (HGQ2 path)**: probe_subln_rf1 (dim 256, io_parallel,
+  II=1): LUT 165,695 (9.6%) · FF 151,297 · **DSP 1,792** · BRAM 0 · 36 cycles @
+  est. 1.818 ns. The range-reduced SubLN at II=1 spends ~7 DSP/lane on the 42-bit
+  variance squares — the norm remains the model's DSP consumer (context: old
+  LayerNorm census 1,049 DSP TOTAL for 51 instances but folded at RF=256; these
+  are different operating points). Lever if needed: narrow diff_t/var_t, or fold.
+- probe_bitlinear_rf256 (real block-0 Wo weights + SubLN, RF=256 Resource):
+  local C-sim corr 0.9999992. Shipped to mulder with probe_attn_core.
+
 ## 2026-07-04 — SubLN custom-layer extension DONE (keras-v3 → Vitis, C-sim gate passed)
 - New `bnhgq2/subln.py`: `PSubLN` keras layer (parameter-free per-token LayerNorm,
   biased var, eps=1e-6, optional `flatten_axes=2` for last-two-axes norm), keras-v3
