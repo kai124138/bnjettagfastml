@@ -2,10 +2,10 @@
  "config_name": "era2-large-w1a8",
  "config_hash": "b224a8ea",
  "stage": "build",
- "written": "2026-07-04T04:39:24",
+ "written": "2026-07-04T05:11:17",
  "payload": {
-  "n_ported": 51,
-  "params": 6978334,
+  "n_ported": 69,
+  "params": 6946535,
   "iq_granularity": {
    "input_proj": "per_channel",
    "bit_block_0_attn_Wq": "per_channel",

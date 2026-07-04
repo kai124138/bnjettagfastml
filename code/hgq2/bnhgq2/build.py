@@ -89,10 +89,35 @@ def build_hgq2_model(cfg: dict, binz: dict, calib: dict, enable_ebops: bool = Tr
     binary_kq, act_q = _quant_cfgs(cfg["quant"]["act_bits"])
 
     def kq(name):
-        e = binz[name]
-        if e["fold"] == "explicit":
-            return binary_kq(csd2_snap(e["beta"]))
+        # v4: ALL denses carry pure ±1 kernels (2-bit runtime operands → no DSP
+        # even in Resource-mode ROM; measured 2026-07-04: in-weight ±β̃ inferred
+        # 256 real DSPs at RF=256). Explicit-fold sites get their β̃ from a
+        # QBatchNormalization affine appended after the dense.
         return binary_kq(None)
+
+    def wq_wide():
+        from hgq.quantizer import QuantizerConfig
+        return QuantizerConfig("kif", "weight", k0=1, i0=2, f0=16,
+                               round_mode="RND", overflow_mode="SAT",
+                               trainable=False, heterogeneous_axis=(),
+                               ic=None, fc=None, ir=None, fr=None)
+
+    def bq_wide():
+        from hgq.quantizer import QuantizerConfig
+        return QuantizerConfig("kif", "bias", k0=1, i0=8, f0=16,
+                               round_mode="RND_CONV", overflow_mode="SAT",
+                               trainable=False, heterogeneous_axis=(),
+                               ic=None, fc=None, ir=None, fr=None)
+
+    def affine(name, x):
+        """β̃·z + b as a frozen QBatchNormalization (ε=0, var=1 → scale = γ
+        exactly = CSD-2 = compile-time shift-add constants, DSP-free)."""
+        from hgq.layers import QBatchNormalization
+        return QBatchNormalization(
+            axis=-1, epsilon=0.0, center=True, scale=True,
+            kq_conf=wq_wide(), bq_conf=bq_wide(), iq_conf=stream_iq(name),
+            name=f"{name}_affine",
+        )(x)
 
     def i0(name):
         v = calib[name]
@@ -158,8 +183,10 @@ def build_hgq2_model(cfg: dict, binz: dict, calib: dict, enable_ebops: bool = Tr
         h = QEinsumDense(
             "btf,fd->btd", output_shape=(T, D), bias_axes="td",
             iq_conf=act_q(i0("input_proj")), kq_conf=kq("input_proj"),
+            bq_conf=bq_wide(),
             name="input_proj",
-        )(h)  # bias table carries input_proj bias + the folded PE constant
+        )(h)  # bias table carries (input_proj bias + folded PE) / beta_csd2
+        h = affine("input_proj", h)
 
         for li in range(L):
             blk = f"bit_block_{li}"
@@ -192,37 +219,40 @@ def build_hgq2_model(cfg: dict, binz: dict, calib: dict, enable_ebops: bool = Tr
                           iq_confs=[attn_grid(), stream_iq(f"{blk}_attn_Wv")],
                           name=f"{blk}_attn_ctx")([attn, v])
             ctx = PSubLN(flatten_axes=2, name=f"ln_{blk}_attn_Wo")(ctx)
-            wo = QEinsumDense("bthe,hed->btd", output_shape=(T, D), bias_axes="d",
+            wo = QEinsumDense("bthe,hed->btd", output_shape=(T, D),
                               iq_conf=act_q(i0(f"{blk}_attn_Wo")),
                               kq_conf=kq(f"{blk}_attn_Wo"),
                               name=f"{blk}_attn_Wo")(ctx)
+            wo = affine(f"{blk}_attn_Wo", wo)
             h = keras.layers.Add(name=f"{blk}_add_attn")([h, wo])
 
             # ---- FFN ----
             ln = PSubLN(name=f"ln_{blk}_ffn_fc1")(h)
             f1 = QEinsumDense("btd,df->btf", output_shape=(T, FFN), bias_axes="f",
                               iq_conf=act_q(i0(f"{blk}_ffn_fc1")),
-                              kq_conf=kq(f"{blk}_ffn_fc1"),
+                              kq_conf=kq(f"{blk}_ffn_fc1"), bq_conf=bq_wide(),
                               name=f"{blk}_ffn_fc1")(ln)
             f1 = keras.layers.ReLU(name=f"{blk}_ffn_act")(f1)
             ln = PSubLN(name=f"ln_{blk}_ffn_fc2")(f1)
-            f2 = QEinsumDense("btf,fd->btd", output_shape=(T, D), bias_axes="d",
+            f2 = QEinsumDense("btf,fd->btd", output_shape=(T, D),
                               iq_conf=act_q(i0(f"{blk}_ffn_fc2")),
                               kq_conf=kq(f"{blk}_ffn_fc2"),
                               name=f"{blk}_ffn_fc2")(ln)
+            f2 = affine(f"{blk}_ffn_fc2", f2)
             h = keras.layers.Add(name=f"{blk}_add_ffn")([h, f2])
 
         # ---- head ----
         h = QGlobalAveragePooling1D(enable_iq=False, name="gap")(h)
         h = PSubLN(name="ln_head_fc1")(h)
-        h = QDense(D, use_bias=True,
+        h = QDense(D, use_bias=True, bq_conf=bq_wide(),
                    iq_conf=act_q(i0("head_fc1")), kq_conf=kq("head_fc1"),
                    name="head_fc1")(h)
         h = keras.layers.ReLU(name="head_act")(h)
         h = PSubLN(name="ln_head_fc2")(h)
-        out = QDense(C, use_bias=True,
+        out = QDense(C, use_bias=False,
                      iq_conf=act_q(i0("head_fc2")), kq_conf=kq("head_fc2"),
                      name="head_fc2")(h)
+        out = affine("head_fc2", out)
 
         model = keras.Model(x_in, out, name=cfg["name"])
     return model

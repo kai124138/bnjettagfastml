@@ -94,6 +94,14 @@ def stage_calibrate(cfg, h, ctx):
         for w in ("Wq", "Wk", "Wv"):
             calib[f"__stream_max_{blk}_attn_{w}"] = \
                 float(np.abs(gm._taps[f"{blk}_attn_{w}"]).max())
+    # explicit-site pre-affine ranges: z = (y − b)/β̃ bounded by (|y|max+|b|max)/β̃
+    from bnhgq2.gold import csd2_snap
+    for name, e in ctx["binz"].items():
+        if name.startswith("_") or e["fold"] != "explicit":
+            continue
+        bmax = float(np.abs(e["bias"]).max()) if e["bias"] is not None else 0.0
+        ymax = float(np.abs(gm._taps[name]).max())
+        calib[f"__stream_max_{name}"] = (ymax + bmax) / csd2_snap(e["beta"])
     np.savez(os.path.join(_run_dir(h), "calib.npz"),
              **{k: np.asarray(v) for k, v in calib.items()})
     ctx["calib"] = calib

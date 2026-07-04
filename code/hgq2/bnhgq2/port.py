@@ -40,27 +40,70 @@ def port_weights(model, cfg: dict, binz: dict, pe: np.ndarray):
             bias = bias / np.float32(e["beta"])
         return bias
 
+    from .gold import csd2_snap
+
     n_set = 0
     for layer in model.layers:
         nm = layer.name
+        if nm.endswith("_affine"):
+            # v4: β̃·z + b as frozen BN (ε=0): γ=CSD-2(β) const, β=trained bias
+            # (input_proj's bias+PE live in its dense table → affine β=0),
+            # moving stats identity.
+            src = nm[:-len("_affine")]
+            e = binz[src]
+            width = e["shape"][1]
+            gamma = np.full(width, csd2_snap(e["beta"]), dtype=np.float32)
+            beta = (np.zeros(width, np.float32) if src == "input_proj"
+                    else e["bias"].astype(np.float32))
+            _assign_bn(layer, gamma, beta)
+            n_set += 1
+            continue
         if nm not in binz or nm.startswith("_"):
             continue  # norm/softmax/einsum/add layers carry no ported weights
         if nm == "input_proj":
-            bias_table = b(nm)[None, :] + pe.astype(np.float32)  # (T,D)
+            # dense output later scaled by β̃ in the affine → table pre-divided
+            bias_table = (b(nm)[None, :] + pe.astype(np.float32)) \
+                / np.float32(csd2_snap(binz[nm]["beta"]))
             _assign(layer, q(nm), bias_table)
         elif nm.endswith(("_attn_Wq", "_attn_Wk", "_attn_Wv")):
             _assign(layer, q(nm).reshape(-1, H, E), None)
         elif nm.endswith("_attn_Wo"):
-            _assign(layer, q(nm).reshape(H, E, -1), b(nm))
-        elif nm.endswith(("_ffn_fc1", "_ffn_fc2")) or nm in ("head_fc1", "head_fc2"):
+            _assign(layer, q(nm).reshape(H, E, -1), None)  # bias in the affine
+        elif nm.endswith("_ffn_fc2") or nm == "head_fc2":
+            _assign(layer, q(nm), None)  # bias in the affine
+        elif nm.endswith("_ffn_fc1") or nm == "head_fc1":
             _assign(layer, q(nm), b(nm))
         else:
             continue
         n_set += 1
-    expected = 3 + 6 * A["n_layers"]  # input_proj + 6/block + 2 head
+    expected = (3 + 6 * A["n_layers"]) + (2 * A["n_layers"] + 2)  # denses + affines
     if n_set != expected:
         raise RuntimeError(f"ported {n_set} layers, expected {expected}")
     return n_set
+
+
+def _assign_bn(layer, gamma, beta):
+    """Set a frozen QBatchNormalization to y = γ·x + β exactly (ε must be 0).
+    Name matching must be exact AND shape-aware: QLayerBase also owns a SCALAR
+    variable named 'beta' (the EBOPs loss weight) that must not be touched."""
+    want_shape = tuple(gamma.shape)
+    found = set()
+    for v in layer.variables:
+        p = (v.path if hasattr(v, "path") else v.name).split("/")[-1]
+        if tuple(v.shape) != want_shape:
+            continue
+        if p in ("gamma", "bn_gamma"):
+            v.assign(gamma); found.add("gamma")
+        elif p in ("beta", "bn_beta"):
+            v.assign(beta); found.add("beta")
+        elif p == "moving_mean":
+            v.assign(np.zeros(want_shape, np.float32)); found.add("mean")
+        elif p in ("moving_variance", "moving_var"):
+            v.assign(np.ones(want_shape, np.float32)); found.add("var")
+    missing = {"gamma", "beta", "mean", "var"} - found
+    if missing:
+        raise RuntimeError(f"{layer.name}: BN variables not found: {missing} "
+                           f"(have: {[getattr(v,'path',v.name) for v in layer.variables]})")
 
 
 def _assign(layer, kernel, bias):

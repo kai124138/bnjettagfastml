@@ -25,12 +25,15 @@ EPS_NORM = 1e-6
 def csd2_snap(beta: float) -> float:
     """Best 2-signed-digit (CSD) approximation 2^a ± 2^b of beta (b < a).
     Such constants multiply as one shift-add: DSP-free in Vitis by the
-    ≤2-signed-digit rule."""
+    ≤2-signed-digit rule — PROVIDED they are compile-time constants (affine
+    layer weights, Latency-inlined), NOT Resource-mode ROM operands (measured
+    2026-07-04: in-weight ±β̃ at RF=256 Resource inferred 256 real DSPs).
+    db capped at 8 so every value is a multiple of 2^-16 (exact in f=16 grids)."""
     best, err = None, np.inf
     a0 = int(np.floor(np.log2(beta)))
     for a in (a0, a0 + 1):
         for sgn in (1, -1):
-            for db in range(1, 24):
+            for db in range(1, 9):
                 v = 2.0 ** a + sgn * 2.0 ** (a - db)
                 if v <= 0:
                     continue

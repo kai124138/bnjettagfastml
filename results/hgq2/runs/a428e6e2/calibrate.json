@@ -2,7 +2,7 @@
  "config_name": "era2-large-w1a6",
  "config_hash": "a428e6e2",
  "stage": "calibrate",
- "written": "2026-07-04T04:39:21",
+ "written": "2026-07-04T05:03:14",
  "payload": {
   "policy": "mse_per_channel",
   "n_calib": 8192,
@@ -338,6 +338,78 @@
    "__stream_max_bit_block_7_attn_Wv": [
     81,
     81
+   ],
+   "__stream_max_bit_block_0_attn_Wo": [
+    54,
+    54
+   ],
+   "__stream_max_bit_block_0_ffn_fc2": [
+    179,
+    179
+   ],
+   "__stream_max_bit_block_1_attn_Wo": [
+    73,
+    73
+   ],
+   "__stream_max_bit_block_1_ffn_fc2": [
+    210,
+    210
+   ],
+   "__stream_max_bit_block_2_attn_Wo": [
+    69,
+    69
+   ],
+   "__stream_max_bit_block_2_ffn_fc2": [
+    197,
+    197
+   ],
+   "__stream_max_bit_block_3_attn_Wo": [
+    76,
+    76
+   ],
+   "__stream_max_bit_block_3_ffn_fc2": [
+    222,
+    222
+   ],
+   "__stream_max_bit_block_4_attn_Wo": [
+    93,
+    93
+   ],
+   "__stream_max_bit_block_4_ffn_fc2": [
+    215,
+    215
+   ],
+   "__stream_max_bit_block_5_attn_Wo": [
+    72,
+    72
+   ],
+   "__stream_max_bit_block_5_ffn_fc2": [
+    249,
+    249
+   ],
+   "__stream_max_bit_block_6_attn_Wo": [
+    84,
+    84
+   ],
+   "__stream_max_bit_block_6_ffn_fc2": [
+    254,
+    254
+   ],
+   "__stream_max_bit_block_7_attn_Wo": [
+    81,
+    81
+   ],
+   "__stream_max_bit_block_7_ffn_fc2": [
+    257,
+    257
+   ],
+   "__stream_max_head_fc2": [
+    62,
+    62
+   ],
+   "__stream_max_input_proj": [
+    12,
+    12
    ]
   }
  }

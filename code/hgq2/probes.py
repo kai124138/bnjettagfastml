@@ -66,33 +66,54 @@ def probe_subln(cfg, dim=256):
 
 
 def probe_bitlinear(cfg, binz, calib, layer="bit_block_0_attn_Wo"):
+    """v4 factoring: SubLN → quant → QDense(pure ±1, no bias) → QBN(γ=CSD-2(β),
+    β=trained bias, ε=0). The in-weight ±β̃ variant measured 256 DSPs at RF=256
+    Resource (ROM operands defeat constant folding) — this probe validates the fix."""
     import keras
     from hgq.config import LayerConfigScope
-    from hgq.layers import QDense
+    from hgq.layers import QDense, QBatchNormalization
+    from hgq.quantizer import QuantizerConfig
     from bnhgq2.subln import PSubLN
     from bnhgq2.gold import csd2_snap
+    from bnhgq2.port import _assign_bn
 
     e = binz[layer]
     d_in, d_out = e["shape"]
     i0 = int(np.max(calib[layer]))
+    wq_wide = QuantizerConfig("kif", "weight", k0=1, i0=2, f0=16,
+                              round_mode="RND", overflow_mode="SAT",
+                              trainable=False, heterogeneous_axis=(),
+                              ic=None, fc=None, ir=None, fr=None)
+    bq_wide = QuantizerConfig("kif", "bias", k0=1, i0=8, f0=16,
+                              round_mode="RND_CONV", overflow_mode="SAT",
+                              trainable=False, heterogeneous_axis=(),
+                              ic=None, fc=None, ir=None, fr=None)
+    aff_iq = QuantizerConfig("kif", "datalane", k0=1, i0=10,
+                             f0=cfg["quant"]["act_bits"] - 1,
+                             round_mode="RND_CONV", overflow_mode="SAT",
+                             trainable=False, heterogeneous_axis=(),
+                             homogeneous_axis=None,
+                             ic=None, fc=None, ir=None, fr=None)
     with LayerConfigScope(enable_ebops=True, beta0=0.0):
         x = keras.Input((d_in,), name="inp")
         h = PSubLN(name="subln")(x)
-        h = QDense(d_out, use_bias=e["bias"] is not None,
+        h = QDense(d_out, use_bias=False,
                    iq_conf=_quant(cfg["quant"]["act_bits"], i0),
-                   kq_conf=_binary_kq(csd2_snap(e["beta"])),
+                   kq_conf=_binary_kq(None),
                    name=layer)(h)
+        h = QBatchNormalization(axis=-1, epsilon=0.0, center=True, scale=True,
+                                kq_conf=wq_wide, bq_conf=bq_wide, iq_conf=aff_iq,
+                                name=f"{layer}_affine")(h)
         m = keras.Model(x, h, name=f"probe_bitlinear_{d_in}x{d_out}")
     lay = m.get_layer(layer)
     kv = getattr(lay, "_kernel", None)
     if kv is None:
         kv = lay.kernel
     kv.assign(e["q"].astype(np.float32))
-    if e["bias"] is not None:
-        bv = getattr(lay, "_bias", None)
-        if bv is None:
-            bv = lay.bias
-        bv.assign(e["bias"].astype(np.float32))
+    gamma = np.full(d_out, csd2_snap(e["beta"]), dtype=np.float32)
+    beta = (e["bias"].astype(np.float32) if e["bias"] is not None
+            else np.zeros(d_out, np.float32))
+    _assign_bn(m.get_layer(f"{layer}_affine"), gamma, beta)
     X = np.random.default_rng(7).normal(0, 2.0, (2048, d_in)).astype(np.float32)
     return m, X, {"strategy": "Resource", "rf": 256}
 

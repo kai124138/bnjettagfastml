@@ -2,6 +2,32 @@
 
 Running log of every consequential change in this effort. Dated, newest on top.
 
+## 2026-07-04 — v4: DSP regression caught by per-instance csynth breakdown; affine refactor
+- **STOP-grade catch**: probe_bitlinear (v3 factoring: in-weight ±β̃ CSD-2) synthesized
+  at RF=256 Resource with **DSP=256 in the "binary" dense** (SubLN only 14). Root
+  cause: Resource strategy stores weights in BRAM/ROM → runtime operands → the Vitis
+  ≤2-signed-digit constant rule NEVER applies. The QKeras path was safe because its
+  weights were literally 1-bit. **The binary-DSP-0 claim requires weights ≤2 bits in
+  the datapath, regardless of the constant's digit count.**
+- **v4 factoring**: ALL denses carry pure ±1 kernels (2-bit operands → mux/negate);
+  the 2L+2 explicit β̃·z+b sites become frozen `QBatchNormalization` affines (ε=0,
+  var=1 → HW scale = γ = CSD-2 exactly, compile-time constants). Biases move into
+  the affines (input_proj: (bias+PE)/β̃ stays as the dense's (T,D) table). Every
+  bias/γ quantizer is an explicit wide frozen SAT grid — v3's silent WRAP-default
+  bias quantizers were ALSO costing fidelity.
+- **v4 verify (A8, full 260k)**: gate1 corr 0.9589, macro-AUC **0.84933 vs trained
+  0.85510 (Δ −0.00578)** — better than v3 (−0.00642); gate2 vs gold corr 0.9937 →
+  **0.9978** after the bias-quantizer fix (residual = float-order noise; softmax-
+  table and stream-margin ablations both negative).
+- A6 v3-semantics verify (math identical to v4), full 260k: gate1 corr 0.8907,
+  AUC **0.82150 vs trained 0.83943 (Δ −0.01794)**.
+- EBOPs (HGQ2-native, trace_minmax): A8 = **634,685,224** vs analytic HGQ-v1
+  convention 530.4M (results/ebops.md) — +19.7%, the accumulator term; conventions
+  reported side by side, never mixed.
+- SubLN folded probe (inside bitlinear probe): DSP=14, LUT ≈ 170k — LUT-heavy
+  (unoptimized wide internals + full unroll), timing 3.03 ns > 2.5 target. Levers:
+  narrow diff_t/var_t, fold the norm. Deferred; reported as-is.
+
 ## 2026-07-04 — A8 rebuild VERIFIED end-to-end (keras side) + first real csynth
 - **v1 → v3 debug trail** (each a real measured failure):
   v1 gate1 AUC 0.500 (garbage) — root cause: every unconfigured HGQ2 datalane
