@@ -187,6 +187,8 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--probe", required=True, choices=list(PROBES))
     ap.add_argument("--rf", type=int, default=None)
+    ap.add_argument("--layer", default="bit_block_0_attn_Wo",
+                    help="checkpoint layer for the bitlinear probe")
     a = ap.parse_args()
 
     cfg = load_config(a.config)
@@ -203,14 +205,17 @@ def main():
     if a.probe == "subln":
         model, X, hcfg = probe_subln(cfg)
     elif a.probe == "bitlinear":
-        model, X, hcfg = probe_bitlinear(cfg, binz, calib)
+        model, X, hcfg = probe_bitlinear(cfg, binz, calib, layer=a.layer)
     else:
         model, X, hcfg = probe_attn_core(cfg, binz, calib)
 
     from bnhgq2.convert import convert, pack_for_mulder
     from bnhgq2.verify import predict_in_batches
     rf = a.rf or hcfg["rf"]
-    out = os.path.join(store.STORE, "runs", h, f"probe_{a.probe}_rf{rf}")
+    tag = a.probe
+    if a.probe == "bitlinear" and a.layer != "bit_block_0_attn_Wo":
+        tag = f"{a.probe}_{a.layer}"
+    out = os.path.join(store.STORE, "runs", h, f"probe_{tag}_rf{rf}")
     if isinstance(X, list):
         keras_ref = np.asarray(model([x[:512] for x in X], training=False))
         csim_X = [x[:512] for x in X]
@@ -221,8 +226,8 @@ def main():
                          csim_X=csim_X, keras_ref=keras_ref)
     tar = pack_for_mulder(out, out + ".tar.gz")
     report["tarball"] = tar
-    report["probe"] = a.probe
-    store.write_stage(cfg, h, f"probe_{a.probe}", report)
+    report["probe"] = tag
+    store.write_stage(cfg, h, f"probe_{tag}", report)
     print(json.dumps(report.get("csim", {}), indent=1))
     print(f"[probe] project: {out}\n[probe] tarball: {tar}")
 

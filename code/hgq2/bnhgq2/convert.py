@@ -75,6 +75,9 @@ def convert(model, cfg: dict, out_dir: str, rf: int | None = None,
 
 def pack_for_mulder(out_dir: str, tar_path: str):
     import subprocess
-    subprocess.run(["tar", "-czf", tar_path, "-C", os.path.dirname(out_dir),
-                    os.path.basename(out_dir)], check=True)
+    # exclude any previously-fetched csynth report: shipping one inside the
+    # tarball made a stale result masquerade as the new run's (caught 2026-07-04)
+    subprocess.run(["tar", "--exclude", "csynth_report.json", "-czf", tar_path,
+                    "-C", os.path.dirname(out_dir), os.path.basename(out_dir)],
+                   check=True)
     return tar_path

@@ -1,0 +1,30 @@
+Backend: Vitis
+ClockPeriod: 2.5
+ClockUncertainty: 27%
+HLSConfig:
+  Model:
+    BitExact: true
+    Precision: fixed<24,12>
+    ReuseFactor: 32
+    Strategy: Latency
+IOType: io_parallel
+InputData: null
+InputShapes:
+  inp:
+  - 256
+KerasModel: !keras_model '/Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/results/hgq2/runs/b224a8ea/probe_bitlinear_head_fc2_rf32/keras_model.keras'
+OutputDir: /Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/results/hgq2/runs/b224a8ea/probe_bitlinear_head_fc2_rf32
+OutputPredictions: null
+OutputShapes:
+  layer6_out:
+  - 5
+Part: xcvu13p-flga2577-2-e
+ProjectName: myproject
+Stamp: a75d0d08
+Version: 1.0.0
+WriterConfig:
+  Namespace: null
+  TBOutputStream: both
+  WriteEmulationConstants: false
+  WriteTar: false
+  WriteWeightsTxt: true

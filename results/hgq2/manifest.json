@@ -87,6 +87,10 @@
     "file": "runs/b224a8ea/probe_bitlinear.json",
     "written": "2026-07-04T06:06:38"
    },
+   "probe_bitlinear_head_fc2": {
+    "file": "runs/b224a8ea/probe_bitlinear_head_fc2.json",
+    "written": "2026-07-04T07:55:52"
+   },
    "probe_subln": {
     "file": "runs/b224a8ea/probe_subln.json",
     "written": "2026-07-04T03:50:51"

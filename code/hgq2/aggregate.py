@@ -107,11 +107,17 @@ def make_table(rows):
     if not any_syn:
         L.append("| *(none yet — projects packed, csynth pending on mulder)* | | | | | | | | |")
     L.append("")
+    L.append("**Per-instance DSP split (from the per-function csynth reports — the numbers "
+             "that carry the thesis):** probe_bitlinear_head_fc2_rf32 (Latency, pure ±1 + "
+             "CSD-2 affine): binary dense **0 DSP** · affine **0 DSP** · SubLN 112 DSP = "
+             "all of the probe's DSPs. probe_bitlinear_rf256/v2 (Resource): dense 256 DSP — "
+             "the documented Resource-ROM trap, kept as the negative result; SubLN folded "
+             "= 14 DSP there. See constraints_map.md.\n")
     L.append("Prior verified per-shape csynth (QKeras path, results/hls_resource_table.md §B′, "
              "RF=256): matmul cores 0 DSP at A8/A6/A4; all 1,049 model DSPs in the "
              "old fixed<32,16> LayerNorm; composed whole-model latency upper bound "
              "23,409 cycles ≈ 58.5 µs @ 400 MHz (attention score core excluded there — "
-             "the HGQ2 attn_core probe above closes exactly that gap).\n")
+             "the HGQ2 attn_core probe closes exactly that gap when its csynth lands).\n")
     return "\n".join(L)
 
 

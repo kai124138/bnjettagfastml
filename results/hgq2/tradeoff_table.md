@@ -16,7 +16,11 @@ Baselines (same table, source `roc-results/r5/roc_auc.md`, verified 2026-07-03):
 
 | probe | precision | LUT | FF | DSP | BRAM_18K | latency (cycles) | II | est. clock |
 |---|---|---|---|---|---|---|---|---|
+| probe_bitlinear_head_fc2_rf32 | A8 | 194,012 | 116,346 | **112** | 0 | 100–100 | 32 | 2.025 ns |
 | probe_bitlinear_rf256 | A8 | 196,871 | 118,597 | **270** | 32 | 832–833 | 573 | 3.035 ns |
+| probe_bitlinear_v2_rf256 | A8 | 222,686 | 135,332 | **270** | 16 | 834–835 | 573 | 3.035 ns |
 | probe_subln_rf1 | A8 | 165,695 | 151,297 | **1792** | 0 | 36–36 | 1 | 1.818 ns |
 
-Prior verified per-shape csynth (QKeras path, results/hls_resource_table.md §B′, RF=256): matmul cores 0 DSP at A8/A6/A4; all 1,049 model DSPs in the old fixed<32,16> LayerNorm; composed whole-model latency upper bound 23,409 cycles ≈ 58.5 µs @ 400 MHz (attention score core excluded there — the HGQ2 attn_core probe above closes exactly that gap).
+**Per-instance DSP split (from the per-function csynth reports — the numbers that carry the thesis):** probe_bitlinear_head_fc2_rf32 (Latency, pure ±1 + CSD-2 affine): binary dense **0 DSP** · affine **0 DSP** · SubLN 112 DSP = all of the probe's DSPs. probe_bitlinear_rf256/v2 (Resource): dense 256 DSP — the documented Resource-ROM trap, kept as the negative result; SubLN folded = 14 DSP there. See constraints_map.md.
+
+Prior verified per-shape csynth (QKeras path, results/hls_resource_table.md §B′, RF=256): matmul cores 0 DSP at A8/A6/A4; all 1,049 model DSPs in the old fixed<32,16> LayerNorm; composed whole-model latency upper bound 23,409 cycles ≈ 58.5 µs @ 400 MHz (attention score core excluded there — the HGQ2 attn_core probe closes exactly that gap when its csynth lands).

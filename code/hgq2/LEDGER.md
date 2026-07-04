@@ -2,6 +2,25 @@
 
 Running log of every consequential change in this effort. Dated, newest on top.
 
+## 2026-07-04 (late) — DSP-0 core VERIFIED in csynth on the HGQ2 path; artifact-contamination bug fixed
+- **probe_bitlinear_head_fc2_rf32** (pure ±1 + CSD-2 affine, Strategy=Latency, real
+  csynth on mulder): total 194,012 LUT / 116,346 FF / **112 DSP** / 100 cyc / II 32 /
+  est. 2.03 ns. Per-function split: binary dense **0 DSP** (23,788 LUT adder trees) ·
+  CSD-2 affine **0 DSP** (285 LUT) · SubLN **112 DSP** = 100% of the probe's DSPs.
+  → The v4 factoring is validated end-to-end: the DSP-0 binary core reproduces on the
+  HGQ2-native path when weights are compile-time constants (Latency) — closing the
+  Resource-ROM regression found earlier today.
+- **Artifact-contamination bug caught & fixed**: pack_for_mulder tarred the project dir
+  *including* a previously-fetched csynth_report.json → the stale v1 report rode inside
+  the v3lat tarball to mulder and was fetched back masquerading as v3lat's result
+  (numbers bit-identical to v1 exposed it; the remote build was genuinely Latency and
+  still synthesizing). Fixes: tar now `--exclude csynth_report.json`; the fetch script
+  regenerates the json only from a real csynth.xml and deletes stale ones. Bogus row
+  purged from the store/table/dashboard.
+- Still in flight on mulder: probe_attn_core_rf1 (attention core, heavy elaboration),
+  probe_bitlinear_{v3lat,a6lat,a4lat}_rf256 (Latency elaboration of 65k-MAC layers is
+  known-slow; the head_fc2 probe already settles the DSP question at small shape).
+
 ## 2026-07-04 — session close: verified state + what's in flight
 - **Results-analyst verification PASS** (experiment-log 2026-07-04 ✓): all 27 core
   quantities recomputed independently from raw arrays match to full float precision.
