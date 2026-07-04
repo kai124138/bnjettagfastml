@@ -2,7 +2,7 @@
  "config_name": "era2-large-w1a6",
  "config_hash": "a428e6e2",
  "stage": "extract",
- "written": "2026-07-04T05:01:59",
+ "written": "2026-07-04T05:54:48",
  "payload": {
   "checkpoint": "models/r5/large-lr05-a6-s1/bitnet/noNorm_train_bitnetJetTagModel.h5",
   "n_bitlinear": 51,

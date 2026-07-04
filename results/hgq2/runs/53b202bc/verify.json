@@ -1,0 +1,37 @@
+{
+ "config_name": "era2-large-w1a4",
+ "config_hash": "53b202bc",
+ "stage": "verify",
+ "written": "2026-07-04T06:16:26",
+ "payload": {
+  "gate2_vs_gold": {
+   "n": 4096,
+   "max_abs_diff": 0.9140580892562866,
+   "mean_abs_diff": 0.11802375316619873,
+   "corr_logits": 0.9785702047707767,
+   "pass": false,
+   "tol_note": "informational tol=0.02; LN eps/float-order differences expected"
+  },
+  "gate1_vs_trained": {
+   "n": 260000,
+   "corr_scores": 0.6788907695184804,
+   "auc_macro": 0.7114871985811091,
+   "auc_macro_ref": 0.7345613060804588,
+   "d_auc": -0.023074107499349683,
+   "auc_per_class": [
+    0.6727362725574889,
+    0.7600865867702122,
+    0.6404595378808493,
+    0.6572574313167416,
+    0.8268961643802533
+   ],
+   "auc_per_class_ref": [
+    0.693996008488677,
+    0.774085719256443,
+    0.6789422643468559,
+    0.6848069822124773,
+    0.8409755560978408
+   ]
+  }
+ }
+}

@@ -2,7 +2,7 @@
  "config_name": "era2-large-w1a8",
  "config_hash": "b224a8ea",
  "stage": "build",
- "written": "2026-07-04T05:11:17",
+ "written": "2026-07-04T05:32:55",
  "payload": {
   "n_ported": 69,
   "params": 6946535,

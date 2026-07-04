@@ -43,7 +43,7 @@ struct config4 : nnet::dense_config {
     static const unsigned n_in = 256;
     static const unsigned n_out = 256;
     static const unsigned io_type = nnet::io_parallel;
-    static const unsigned strategy = nnet::resource;
+    static const unsigned strategy = nnet::latency;
     static const unsigned reuse_factor = 256;
     static const unsigned n_zeros = 0;
     static const unsigned n_nonzeros = 65536;
@@ -54,7 +54,7 @@ struct config4 : nnet::dense_config {
     typedef bit_block_0_attn_Wo_weight_t weight_t;
     typedef layer4_index index_t;
     template<class data_T, class res_T, class CONFIG_T>
-    using kernel = nnet::DenseResource_rf_leq_nin<data_T, res_T, CONFIG_T>;
+    using kernel = nnet::DenseLatency<data_T, res_T, CONFIG_T>;
     template<class x_T, class y_T>
     using product = nnet::product::mult<x_T, y_T>;
 };

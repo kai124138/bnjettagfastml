@@ -2,11 +2,11 @@
  "config_name": "era2-large-w1a8",
  "config_hash": "b224a8ea",
  "stage": "probe_bitlinear",
- "written": "2026-07-04T05:31:43",
+ "written": "2026-07-04T06:06:38",
  "payload": {
   "output_dir": "/Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/results/hgq2/runs/b224a8ea/probe_bitlinear_rf256",
   "rf": 256,
-  "strategy": "Resource",
+  "strategy": "Latency",
   "backend": "Vitis",
   "csim": {
    "n": 512,

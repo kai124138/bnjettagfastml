@@ -2,7 +2,7 @@
  "config_name": "era2-large-w1a4",
  "config_hash": "53b202bc",
  "stage": "calibrate",
- "written": "2026-07-04T05:06:04",
+ "written": "2026-07-04T06:18:01",
  "payload": {
   "policy": "mse_per_channel",
   "n_calib": 8192,

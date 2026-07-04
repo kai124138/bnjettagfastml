@@ -115,7 +115,10 @@ def probe_bitlinear(cfg, binz, calib, layer="bit_block_0_attn_Wo"):
             else np.zeros(d_out, np.float32))
     _assign_bn(m.get_layer(f"{layer}_affine"), gamma, beta)
     X = np.random.default_rng(7).normal(0, 2.0, (2048, d_in)).astype(np.float32)
-    return m, X, {"strategy": "Resource", "rf": 256}
+    # Latency strategy: weights inlined as compile-time constants → Vitis folds
+    # ±1 multiplies into add/sub (DSP-free); Resource-mode ROM operands defeated
+    # both const folding and the binary product specialization (measured: 256 DSP).
+    return m, X, {"strategy": "Latency", "rf": 256}
 
 
 def probe_attn_core(cfg, binz, calib, blk="bit_block_0"):
