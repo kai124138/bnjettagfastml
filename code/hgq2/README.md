@@ -26,6 +26,10 @@ A new model = a new JSON in `configs/` through the same stages — nothing re-de
 | `bnhgq2/verify.py` | fidelity gates: rebuild↔trained corr + macro-OvR AUC vs `roc-results/r5/*.npz`; HGQ2↔hls4ml bit-exactness. |
 | `bnhgq2/ebops_calc.py` | native HGQ2 EBOPs per config. |
 | `bnhgq2/convert.py` | hls4ml (Vitis backend) conversion + project write for mulder csynth. |
+| `bnhgq2/subln.py` | SubLN hls4ml extension: `PSubLN` keras layer + keras-v3 handler + `SubLN` IR + BitExact kif hooks + Vitis/Vivado templates + `register_subln()`. |
+| `bnhgq2/compat.py` | Shims: keras-3.15 `EinsumDense.full_output_shape`, hgq MHA registry alias, `patch_project_for_macos()` for local C-sim. |
+| `hls_templates/nnet_subln.h` | SubLN C++ kernel with range-reduced 1/√ table (valid for any var magnitude, unlike stock `nnet_layernorm.h`). |
+| `test_subln.py` | SubLN C-sim acceptance gate: shapes × (corr, max-err) vs keras float; run before any csynth handoff. |
 | `bnhgq2/store.py` | results store (JSON per stage + manifest). |
 | `probe_binary_pinning.py` | the empirical test matrix that established the binary recipe (run once, kept as evidence). |
 | `run_stage.py` | CLI entry: `python run_stage.py <stage> --config configs/X.json`. |

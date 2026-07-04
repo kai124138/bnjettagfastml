@@ -1,0 +1,108 @@
+"""Port extracted+binarized QKeras weights into the HGQ2 rebuild.
+
+Mapping (checkpoint kernel (in, out) layouts → HGQ2 einsum kernels):
+  input_proj  (16,256)   → 'btf,fd->btd'  kernel (16,256); bias table (10,256) =
+                            bias[None,:] + PE (the folded positional constant)
+  attn_Wq/Wk/Wv (256,256)→ 'btd,dhe->bthe' kernel (256,H,E)  [row-major reshape]
+  attn_Wo     (256,256)  → 'bthe,hed->btd' kernel (H,E,256)  [row d_in = h*E+e]
+  ffn_fc1     (256,1024) → 'btd,df->btf'   kernel as-is; bias (1024,)
+  ffn_fc2     (1024,256) → 'btf,fd->btd'   kernel as-is; bias (256,)
+  head_fc1/2             → QDense kernels as-is
+Kernels are assigned as the SIGN matrices (±1); the per-tensor β̃ (pow2-snapped)
+lives in the weight quantizer's scaler (set at build time from the same binz dict).
+"""
+from __future__ import annotations
+
+import numpy as np
+
+
+def pow2_snap(beta: float) -> float:
+    return float(2.0 ** np.round(np.log2(beta)))
+
+
+def betas_pow2(binz: dict) -> dict:
+    return {n: pow2_snap(e["beta"]) for n, e in binz.items() if not n.startswith("_")}
+
+
+def port_weights(model, cfg: dict, binz: dict, pe: np.ndarray):
+    A = cfg["arch"]
+    H, E = A["n_heads"], A["d_model"] // A["n_heads"]
+
+    def q(name):
+        return binz[name]["q"].astype(np.float32)
+
+    def b(name):
+        e = binz[name]
+        bias = e["bias"].astype(np.float32)
+        if e["fold"] == "bias_fold":
+            # pure ±1 weights; the next LN kills the missing β scale exactly,
+            # provided the bias is rescaled to b/β (see gold.py fold math)
+            bias = bias / np.float32(e["beta"])
+        return bias
+
+    n_set = 0
+    for layer in model.layers:
+        nm = layer.name
+        if nm == "input_proj":
+            bias_table = b(nm)[None, :] + pe.astype(np.float32)  # (T,D)
+            _assign(layer, q(nm), bias_table)
+        elif nm.endswith(("_attn_Wq", "_attn_Wk", "_attn_Wv")):
+            _assign(layer, q(nm).reshape(-1, H, E), None)
+        elif nm.endswith("_attn_Wo"):
+            _assign(layer, q(nm).reshape(H, E, -1), b(nm))
+        elif nm.endswith(("_ffn_fc1", "_ffn_fc2")) or nm in ("head_fc1", "head_fc2"):
+            _assign(layer, q(nm), b(nm))
+        else:
+            continue
+        n_set += 1
+    expected = 3 + 6 * A["n_layers"]  # input_proj + 6/block + 2 head
+    if n_set != expected:
+        raise RuntimeError(f"ported {n_set} layers, expected {expected}")
+    return n_set
+
+
+def _assign(layer, kernel, bias):
+    ker_var = getattr(layer, "_kernel", None)
+    if ker_var is None:
+        ker_var = layer.kernel
+    if tuple(ker_var.shape) != tuple(kernel.shape):
+        raise ValueError(f"{layer.name}: kernel shape {tuple(ker_var.shape)} != {kernel.shape}")
+    ker_var.assign(kernel)
+    if bias is not None:
+        bias_var = getattr(layer, "_bias", None) or layer.bias
+        bias_var.assign(bias.reshape(tuple(bias_var.shape)))
+
+
+def assign_per_channel_ibits(model, calib: dict, act_bits: int):
+    """Refinement: push per-channel (last-axis) integer-bit choices into each
+    layer's input quantizer (i and f variables). Heterogeneous quantizer vars
+    may be per-element shaped (e.g. (T, D)); per-channel values broadcast over
+    the leading axes. Returns {layer_name: 'per_channel'|'scalar'} describing
+    what was actually applied (verify.py mirrors this in the gold model)."""
+    applied = {}
+    for layer in model.layers:
+        name = layer.name
+        if name not in calib:
+            continue
+        vals = np.asarray(calib[name], dtype=np.float32)
+        iq = getattr(layer, "iq", None)
+        if iq is None or vals.ndim == 0:
+            if iq is not None:
+                applied[name] = "scalar"
+            continue
+        qz = iq.quantizer  # internal FixedPointQuantizerKIF
+        try:
+            ishape = tuple(qz._i.shape)
+        except AttributeError:
+            ishape = tuple(qz.i.shape)
+        try:
+            if len(ishape) >= 1 and ishape[-1] == vals.shape[-1]:
+                tiled = np.broadcast_to(vals, ishape).astype(np.float32)
+                (qz._i if hasattr(qz, "_i") else qz.i).assign(tiled)
+                (qz._f if hasattr(qz, "_f") else qz.f).assign(act_bits - 1 - tiled)
+                applied[name] = "per_channel"
+            else:
+                applied[name] = "scalar"
+        except Exception:
+            applied[name] = "scalar"
+    return applied

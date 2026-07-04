@@ -22,6 +22,27 @@ import numpy as np
 EPS_NORM = 1e-6
 
 
+def csd2_snap(beta: float) -> float:
+    """Best 2-signed-digit (CSD) approximation 2^a ± 2^b of beta (b < a).
+    Such constants multiply as one shift-add: DSP-free in Vitis by the
+    ≤2-signed-digit rule."""
+    best, err = None, np.inf
+    a0 = int(np.floor(np.log2(beta)))
+    for a in (a0, a0 + 1):
+        for sgn in (1, -1):
+            for db in range(1, 24):
+                v = 2.0 ** a + sgn * 2.0 ** (a - db)
+                if v <= 0:
+                    continue
+                e = abs(v - beta)
+                if e < err:
+                    best, err = v, e
+        e = abs(2.0 ** a - beta)  # single digit
+        if e < err:
+            best, err = 2.0 ** a, e
+    return float(best)
+
+
 def layer_norm(x):
     mu = x.mean(axis=-1, keepdims=True)
     var = x.var(axis=-1, keepdims=True)
@@ -53,15 +74,44 @@ class GoldModel:
     """cfg: the pipeline config dict. binz: binarize_checkpoint() output.
     pe: (n_part, d_model). calib: {layer_name: i_bits} for static mode."""
 
-    def __init__(self, cfg, binz, pe, mode="dynamic", calib=None):
+    def __init__(self, cfg, binz, pe, mode="dynamic", calib=None, beta_mode="exact"):
         self.arch = cfg["arch"]
         self.bits = cfg["quant"]["act_bits"]
         self.binz = binz
         self.pe = pe.astype(np.float32)
         self.mode = mode
         self.calib = calib or {}
+        self.beta_mode = beta_mode  # 'exact' | 'pow2' (β snapped to 2^round(log2 β))
         self.d_head = self.arch["d_model"] // self.arch["n_heads"]
         self._taps = None  # optional per-layer activation taps
+
+    def beta(self, name):
+        b = self.binz[name]["beta"]
+        if self.beta_mode == "pow2":
+            return float(2.0 ** np.round(np.log2(b)))
+        if self.beta_mode == "fold_csd2":
+            fold = self.binz[name]["fold"]
+            if fold in ("score_fold", "ln_killed", "bias_fold"):
+                return 1.0  # exact: folded into softmax scale / next LN / bias
+            return csd2_snap(b)  # explicit residual contributors + logits
+        return float(b)
+
+    def bias(self, name):
+        e = self.binz[name]
+        if e["bias"] is None:
+            return None
+        b = e["bias"].astype(np.float32)
+        if self.beta_mode == "fold_csd2" and e["fold"] == "bias_fold":
+            return b / np.float32(e["beta"])  # exact: next LN kills the 1/β scale
+        return b
+
+    def score_scale(self, blk):
+        """Attention score multiplier: exact β_q·β_k/√d_head in fold mode (free —
+        folds into the softmax exp LUT in hardware), else 1/√d_head."""
+        s = 1.0 / np.sqrt(self.d_head)
+        if self.beta_mode == "fold_csd2":
+            s = s * self.binz[f"{blk}_attn_Wq"]["beta"] * self.binz[f"{blk}_attn_Wk"]["beta"]
+        return np.float32(s)
 
     # ---- one BitLinear: LN -> actquant -> (+-1 matmul) -> beta,bias affine ----
     def bitlinear(self, name, x, observe=None):
@@ -74,9 +124,10 @@ class GoldModel:
         else:
             hq = act_quant_static(h, self.bits, self.calib[name])
         z = hq.astype(np.float32) @ e["q"].astype(np.float32)
-        y = np.float32(e["beta"]) * z
-        if e["bias"] is not None:
-            y = y + e["bias"].astype(np.float32)
+        y = np.float32(self.beta(name)) * z
+        bias = self.bias(name)
+        if bias is not None:
+            y = y + bias
         if self._taps is not None:
             self._taps[name] = y
         return y
@@ -93,7 +144,7 @@ class GoldModel:
             return t.reshape(B, T, H, dh).transpose(0, 2, 1, 3)
 
         qh, kh, vh = split(q), split(k), split(v)
-        scores = qh @ kh.transpose(0, 1, 3, 2) / np.float32(np.sqrt(dh))
+        scores = qh @ kh.transpose(0, 1, 3, 2) * self.score_scale(blk)
         if self._taps is not None:
             self._taps[f"{blk}_scores"] = scores
         scores64 = scores.astype(np.float64)
