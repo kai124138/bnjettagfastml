@@ -1,0 +1,21 @@
+{
+ "config_name": "era2-large-w1a4",
+ "config_hash": "53b202bc",
+ "stage": "probe_bitlinear",
+ "written": "2026-07-04T06:31:37",
+ "payload": {
+  "output_dir": "/Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/results/hgq2/runs/53b202bc/probe_bitlinear_rf256",
+  "rf": 256,
+  "strategy": "Latency",
+  "backend": "Vitis",
+  "csim": {
+   "n": 512,
+   "max_abs_diff": 0.02734375,
+   "mean_abs_diff": 0.0009613037109375,
+   "bit_exact": false,
+   "corr": 0.9999831000120855
+  },
+  "tarball": "/Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/results/hgq2/runs/53b202bc/probe_bitlinear_rf256.tar.gz",
+  "probe": "bitlinear"
+ }
+}

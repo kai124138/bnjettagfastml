@@ -19,6 +19,10 @@
     "file": "runs/53b202bc/extract.json",
     "written": "2026-07-04T06:16:45"
    },
+   "probe_bitlinear": {
+    "file": "runs/53b202bc/probe_bitlinear.json",
+    "written": "2026-07-04T06:31:37"
+   },
    "verify": {
     "file": "runs/53b202bc/verify.json",
     "written": "2026-07-04T06:16:26"
@@ -44,6 +48,10 @@
    "extract": {
     "file": "runs/a428e6e2/extract.json",
     "written": "2026-07-04T05:54:48"
+   },
+   "probe_bitlinear": {
+    "file": "runs/a428e6e2/probe_bitlinear.json",
+    "written": "2026-07-04T06:31:28"
    },
    "verify": {
     "file": "runs/a428e6e2/verify.json",
