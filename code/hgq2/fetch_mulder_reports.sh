@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Pull any finished csynth reports home from mulder:~/bnjet_hgq2/, then refresh
+# the tradeoff table, ROC figure, and dashboard from the store.
+# Safe to run repeatedly; only copies reports that exist.
+set -uo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+STORE="$HERE/../../results/hgq2"
+PY=/Users/kaiyamaguchi/Downloads/bnjettag-training-results/.venv-hgq2/bin/python
+
+declare -A DEST=(
+  [probe_subln_rf1]=b224a8ea
+  [probe_bitlinear_rf256]=b224a8ea
+  [probe_bitlinear_v2_rf256]=b224a8ea
+  [probe_bitlinear_v3lat_rf256]=b224a8ea
+  [probe_attn_core_rf1]=b224a8ea
+  [probe_bitlinear_a6lat_rf256]=a428e6e2
+  [probe_bitlinear_a4lat_rf256]=53b202bc
+)
+
+for probe in "${!DEST[@]}"; do
+  h="${DEST[$probe]}"
+  # generate report JSON on mulder if the xml exists but json doesn't yet
+  ssh -o BatchMode=yes mulder "cd ~/bnjet_hgq2/$probe 2>/dev/null && \
+    x=myproject_prj/solution1/syn/report/csynth.xml && [ -f \$x ] && \
+    python3 ~/bnjet_hgq2/parse_csynth.py \$x > csynth_report.json" 2>/dev/null
+  mkdir -p "$STORE/runs/$h/$probe"
+  if scp -q "mulder:~/bnjet_hgq2/$probe/csynth_report.json" \
+        "$STORE/runs/$h/$probe/csynth_report.json" 2>/dev/null; then
+    echo "[fetched] $probe -> runs/$h/$probe/"
+  else
+    echo "[pending] $probe (csynth not finished)"
+  fi
+done
+
+cd "$HERE"
+KERAS_BACKEND=tensorflow "$PY" aggregate.py
+KERAS_BACKEND=tensorflow "$PY" generate_dashboard.py
+echo "Refreshed: $STORE/tradeoff_table.md, roc_hgq2_overlay.png, dashboard.html"
+echo "(Re-publish the dashboard artifact from Claude Code if you want the web copy updated.)"

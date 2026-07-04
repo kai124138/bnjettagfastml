@@ -2,6 +2,24 @@
 
 Running log of every consequential change in this effort. Dated, newest on top.
 
+## 2026-07-04 — session close: verified state + what's in flight
+- **Results-analyst verification PASS** (experiment-log 2026-07-04 ✓): all 27 core
+  quantities recomputed independently from raw arrays match to full float precision.
+- RESEARCH.md updated: §2 status, new §6′ (HGQ2 path), §8 provenance rows.
+- Dashboard (read-only store view) generated + published as a Claude artifact;
+  regenerate anytime with `generate_dashboard.py`.
+- **csynth still RUNNING on mulder at close** (fetch with `./fetch_mulder_reports.sh`):
+  probe_attn_core_rf1 (A8 attention core — THE previously-excluded piece; C-sim corr 1.0
+  already proven), probe_bitlinear_v3lat_rf256 + a6lat + a4lat (pure-±1 Latency-strategy
+  denses — the expected DSP-0-core validation + the LUT-vs-precision axis). Latency-
+  strategy elaboration of 65k-MAC layers is slow; expect hours, not minutes.
+- **NOT launched (needs Kai)**: round-6-small training (the directive's literal D32/L2
+  era-2 model — no trained checkpoint exists at that scale).
+  Launch: `code/jobs/training/variants/launch_r6s_staged.sh` (5 PVC-free jobs,
+  server-dry-run validated). Once its W&B checkpoints exist, the same pipeline runs it
+  end-to-end (new configs + `run_stage.py all`), and the SMALL model can be synthesized
+  as ONE monolith per precision — the deployable-scale table the large model can't give.
+
 ## 2026-07-04 — v4: DSP regression caught by per-instance csynth breakdown; affine refactor
 - **STOP-grade catch**: probe_bitlinear (v3 factoring: in-weight ±β̃ CSD-2) synthesized
   at RF=256 Resource with **DSP=256 in the "binary" dense** (SubLN only 14). Root
