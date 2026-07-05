@@ -1,0 +1,78 @@
+{
+  "source": "results/hgq2/runs/b224a8ea/probe_bitlinear_head_fc2_rf32/csynth.xml",
+  "top_total": {
+    "BRAM_18K": 0,
+    "DSP": 112,
+    "FF": 116346,
+    "LUT": 194012,
+    "URAM": 0
+  },
+  "modules": [
+    {
+      "module": "subln_1d_ap_fixed_31_15_5_3_0_ap_fixed_8_4_4_0_0_config2_s",
+      "role": "subln",
+      "BRAM_18K": 0,
+      "DSP": 112,
+      "FF": 99672,
+      "LUT": 169549,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "94",
+        "ii": "32"
+      }
+    },
+    {
+      "module": "subln_ap_fixed_31_15_5_3_0_ap_fixed_8_4_4_0_0_config2_s",
+      "role": "subln",
+      "BRAM_18K": 0,
+      "DSP": 112,
+      "FF": 99708,
+      "LUT": 169723,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "94",
+        "ii": "32"
+      }
+    },
+    {
+      "module": "dense_latency_ap_fixed_8_4_4_0_0_ap_fixed_15_11_4_0_0_config4_s",
+      "role": "dense",
+      "BRAM_18K": 0,
+      "DSP": 0,
+      "FF": 6540,
+      "LUT": 23788,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "4",
+        "ii": "5"
+      }
+    },
+    {
+      "module": "normalize_ap_fixed_15_11_4_0_0_ap_fixed_24_8_5_3_0_config6_s",
+      "role": "affine",
+      "BRAM_18K": 0,
+      "DSP": 0,
+      "FF": 0,
+      "LUT": 285,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "0",
+        "ii": "1"
+      }
+    },
+    {
+      "module": "myproject",
+      "role": "other",
+      "BRAM_18K": 0,
+      "DSP": 112,
+      "FF": 116346,
+      "LUT": 194012,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "100",
+        "ii": "32"
+      }
+    }
+  ],
+  "note": "per-Module (per-function) synthesis table from ModuleInformation; top_total is the whole-probe AreaEstimates. Instances of the same module share one entry (Vitis reports unique modules)."
+}

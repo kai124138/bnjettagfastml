@@ -2,6 +2,25 @@
 
 Running log of every consequential change in this effort. Dated, newest on top.
 
+## 2026-07-05 (later) — per-instance csynth reports in the store; poster gaps 1/2/7 closed
+- A parallel poster session (poster/) froze figures against the store and left a gap
+  list (poster/GAPS.md); items addressed to the live session are now closed:
+- **Gap 1 — per-function DSP attribution is store-backed.** Raw `csynth.xml` fetched
+  from mulder into `results/hgq2/runs/b224a8ea/<probe>/` for all four finished probes;
+  new `parse_csynth_modules.py` emits `csynth_modules.json` (per-Module resources +
+  latency) beside each. Numbers confirm exactly what the ledger had quoted:
+  head_fc2_rf32 → SubLN 112 / binary dense 0 / CSD-2 affine 0 (top 112);
+  rf256 Resource → dense 256 / SubLN 14 (top 270); subln_rf1 → SubLN 1792.
+- **New per-module fact from attn_core_rf1**: each act×act einsum (QKᵀ and attn·V,
+  10×10×8×32 = 25,600 MACs) synthesized to **25,600 DSP — exactly 1 DSP per MAC**;
+  the softmax module itself is only 10 DSP. The "~51k real multipliers" statement is
+  now precise: 51,200 einsum DSPs + ~800 top-level/softmax glue = 52,000.
+- **Gap 7 — head count.** `"n_heads": 8` read directly off the `model_config` h5
+  attribute of all three r5 large checkpoints (s1 / a6-s1 / a4-s1). Era-2 large = H8, E=32.
+- fetch_mulder_reports.sh now also pulls csynth.xml + regenerates csynth_modules.json
+  on every fetch, and probe_attn_core_rf64 added to its PAIRS (fetch-ready when it lands).
+- rf64 folded attention core still synthesizing on mulder (monitor armed; no crash).
+
 ## 2026-07-05 — attention core SYNTHESIZED (the historically-excluded piece)
 - **probe_attn_core_rf1** (large-model core: scores QKᵀ → stable table softmax with
   β_qβ_k/√d in the exp LUT → attn·V; T=10, H=8, E=32; 16-bit input grids, RF=1

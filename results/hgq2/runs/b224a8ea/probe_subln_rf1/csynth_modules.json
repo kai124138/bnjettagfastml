@@ -1,0 +1,52 @@
+{
+  "source": "results/hgq2/runs/b224a8ea/probe_subln_rf1/csynth.xml",
+  "top_total": {
+    "BRAM_18K": 0,
+    "DSP": 1792,
+    "FF": 151297,
+    "LUT": 165695,
+    "URAM": 0
+  },
+  "modules": [
+    {
+      "module": "subln_1d_ap_fixed_31_15_5_3_0_ap_fixed_18_5_5_3_0_config2_s",
+      "role": "subln",
+      "BRAM_18K": 0,
+      "DSP": 1792,
+      "FF": 143286,
+      "LUT": 165651,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "36",
+        "ii": "1"
+      }
+    },
+    {
+      "module": "subln_ap_fixed_31_15_5_3_0_ap_fixed_18_5_5_3_0_config2_s",
+      "role": "subln",
+      "BRAM_18K": 0,
+      "DSP": 1792,
+      "FF": 143323,
+      "LUT": 165653,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "36",
+        "ii": "1"
+      }
+    },
+    {
+      "module": "myproject",
+      "role": "other",
+      "BRAM_18K": 0,
+      "DSP": 1792,
+      "FF": 151297,
+      "LUT": 165695,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "36",
+        "ii": "1"
+      }
+    }
+  ],
+  "note": "per-Module (per-function) synthesis table from ModuleInformation; top_total is the whole-probe AreaEstimates. Instances of the same module share one entry (Vitis reports unique modules)."
+}

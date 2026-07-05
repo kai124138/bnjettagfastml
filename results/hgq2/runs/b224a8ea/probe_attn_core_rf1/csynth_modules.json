@@ -1,0 +1,78 @@
+{
+  "source": "results/hgq2/runs/b224a8ea/probe_attn_core_rf1/csynth.xml",
+  "top_total": {
+    "BRAM_18K": 720,
+    "DSP": 52000,
+    "FF": 9467557,
+    "LUT": 4271510,
+    "URAM": 0
+  },
+  "modules": [
+    {
+      "module": "einsum_ap_fixed_ap_fixed_16_10_4_0_0_ap_fixed_37_25_5_3_0_config5_s",
+      "role": "einsum",
+      "BRAM_18K": 0,
+      "DSP": 25600,
+      "FF": 2921121,
+      "LUT": 1049600,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "4",
+        "ii": "1"
+      }
+    },
+    {
+      "module": "softmax_stable_ap_fixed_ap_ufixed_23_1_4_0_0_softmax_config6_s",
+      "role": "softmax",
+      "BRAM_18K": 9,
+      "DSP": 10,
+      "FF": 4425,
+      "LUT": 4558,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "16",
+        "ii": "1"
+      }
+    },
+    {
+      "module": "transpose_ap_fixed_ap_fixed_43_15_5_3_0_config10_tpose_out_s",
+      "role": "other",
+      "BRAM_18K": 0,
+      "DSP": 0,
+      "FF": 0,
+      "LUT": 0,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "0",
+        "ii": "1"
+      }
+    },
+    {
+      "module": "einsum_ap_ufixed_ap_fixed_ap_fixed_43_15_5_3_0_config10_s",
+      "role": "einsum",
+      "BRAM_18K": 0,
+      "DSP": 25600,
+      "FF": 5980417,
+      "LUT": 2856960,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "7",
+        "ii": "1"
+      }
+    },
+    {
+      "module": "myproject",
+      "role": "other",
+      "BRAM_18K": 720,
+      "DSP": 52000,
+      "FF": 9467557,
+      "LUT": 4271510,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "31",
+        "ii": "1"
+      }
+    }
+  ],
+  "note": "per-Module (per-function) synthesis table from ModuleInformation; top_total is the whole-probe AreaEstimates. Instances of the same module share one entry (Vitis reports unique modules)."
+}

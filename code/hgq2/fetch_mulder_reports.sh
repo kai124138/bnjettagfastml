@@ -14,6 +14,7 @@ probe_bitlinear_v2_rf256:b224a8ea
 probe_bitlinear_v3lat_rf256:b224a8ea
 probe_bitlinear_head_fc2_rf32:b224a8ea
 probe_attn_core_rf1:b224a8ea
+probe_attn_core_rf64:b224a8ea
 probe_bitlinear_a6lat_rf256:a428e6e2
 probe_bitlinear_a4lat_rf256:53b202bc
 "
@@ -31,6 +32,12 @@ for pair in $PAIRS; do
   if scp -q "mulder:~/bnjet_hgq2/$probe/csynth_report.json" \
         "$STORE/runs/$h/$probe/csynth_report.json" 2>/dev/null; then
     echo "[fetched] $probe -> runs/$h/$probe/"
+    # raw per-instance report too: csynth.xml is the ground truth the poster
+    # gate needs for per-function DSP attribution (poster/GAPS.md item 1)
+    if scp -q "mulder:~/bnjet_hgq2/$probe/myproject_prj/solution1/syn/report/csynth.xml" \
+          "$STORE/runs/$h/$probe/csynth.xml" 2>/dev/null; then
+      python3 "$HERE/parse_csynth_modules.py" "$STORE/runs/$h/$probe/csynth.xml"
+    fi
   else
     echo "[pending] $probe (csynth not finished)"
   fi
