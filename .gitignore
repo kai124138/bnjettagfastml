@@ -1,17 +1,33 @@
-# secrets — never commit
-wandb-api-key.txt
-.netrc
+# Repo root since 2026-07-05 (was qkeras-bitnet-run-2026-06-22/).
+# Never track the personal learning notes.
+LEARN/
+.obsidian/
 
-# local virtualenv
+# Secrets — never commit
+**/wandb-api-key.txt
+*.env
+
+# Heavy / generated artifacts (noise for agents too)
 .venv-plots/
-
-# python caches
+.venv-hgq2/
+session-export-*/
+*-local-command-caveat*.txt
+*.zip
 __pycache__/
-*.pyc
-
-# macOS
 .DS_Store
 
-# personal learning notes — never commit (kept outside the repo on purpose)
-LEARN/
-**/LEARN/
+# Large binaries — fetch from W&B (models) / Zenodo (data); docs stay tracked
+# (anchored to repo root: the run dir's own tracked subdirs must not match)
+/models/*
+!/models/MODEL.md
+/data/
+
+# Third-party clones and superseded material (top level only)
+/reference-code/
+/archive/
+
+# Downloaded third-party paper PDFs (notes + fetch script stay tracked)
+papers/**/*.pdf
+
+# Claude Code local settings (machine-specific); agents/, commands/, memory/ stay shareable
+.claude/settings.local.json

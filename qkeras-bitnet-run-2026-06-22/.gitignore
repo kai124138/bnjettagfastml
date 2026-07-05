@@ -1,0 +1,17 @@
+# secrets — never commit
+wandb-api-key.txt
+.netrc
+
+# local virtualenv
+.venv-plots/
+
+# python caches
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# personal learning notes — never commit (kept outside the repo on purpose)
+LEARN/
+**/LEARN/
