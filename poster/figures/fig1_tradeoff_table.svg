@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="820.8pt" height="330.48pt" viewBox="0 0 820.8 330.48" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-07-04T13:10:25.776941</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.0, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 330.48 
+L 820.8 330.48 
+L 820.8 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="line2d_1">
+    <path d="M 16.416 86.751 
+L 804.384 86.751 
+" style="fill: none; stroke: #c3c2b7; stroke-width: 1.2; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 16.416 115.668 
+L 804.384 115.668 
+" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 16.416 151.52508 
+L 804.384 151.52508 
+" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_4">
+    <path d="M 17.991936 174.196008 
+" style="fill: none; stroke: #2a78d6; stroke-width: 1.5; stroke-linecap: square"/>
+    <defs>
+     <path id="m9cd4aaa4b1" d="M -3.5 3.5 
+L 3.5 3.5 
+L 3.5 -3.5 
+L -3.5 -3.5 
+z
+" style="stroke: #2a78d6; stroke-linejoin: miter"/>
+    </defs>
+    <g>
+     <use xlink:href="#m9cd4aaa4b1" x="17.991936" y="174.196008" style="fill: #2a78d6; stroke: #2a78d6; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="line2d_5">
+    <path d="M 16.416 187.38216 
+L 804.384 187.38216 
+" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_6">
+    <path d="M 17.991936 210.053088 
+" style="fill: none; stroke: #199e70; stroke-width: 1.5; stroke-linecap: square"/>
+    <defs>
+     <path id="m2e97e0b68f" d="M -3.5 3.5 
+L 3.5 3.5 
+L 3.5 -3.5 
+L -3.5 -3.5 
+z
+" style="stroke: #199e70; stroke-linejoin: miter"/>
+    </defs>
+    <g>
+     <use xlink:href="#m2e97e0b68f" x="17.991936" y="210.053088" style="fill: #199e70; stroke: #199e70; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="line2d_7">
+    <path d="M 16.416 223.23924 
+L 804.384 223.23924 
+" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_8">
+    <path d="M 17.991936 245.910168 
+" style="fill: none; stroke: #e34948; stroke-width: 1.5; stroke-linecap: square"/>
+    <defs>
+     <path id="m617c1d5b50" d="M -3.5 3.5 
+L 3.5 3.5 
+L 3.5 -3.5 
+L -3.5 -3.5 
+z
+" style="stroke: #e34948; stroke-linejoin: miter"/>
+    </defs>
+    <g>
+     <use xlink:href="#m617c1d5b50" x="17.991936" y="245.910168" style="fill: #e34948; stroke: #e34948; stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="16.416" y="64.77408" transform="rotate(-0 16.416 64.77408)">Model</text>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="284.32512" y="64.77408" transform="rotate(-0 284.32512 64.77408)">Trained AUC</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="284.32512" y="77.49756" transform="rotate(-0 284.32512 77.49756)">ROC-test macro-OvR</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="410.4" y="64.77408" transform="rotate(-0 410.4 64.77408)">HGQ2 rebuild AUC</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="410.4" y="77.49756" transform="rotate(-0 410.4 77.49756)">binary-pinned, static act quant</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="548.2944" y="64.77408" transform="rotate(-0 548.2944 64.77408)">Δ (rebuild − trained)</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="670.42944" y="64.77408" transform="rotate(-0 670.42944 64.77408)">EBOPs (HGQ2-native)</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="670.42944" y="77.49756" transform="rotate(-0 670.42944 77.49756)">accumulator in</text>
+   </g>
+   <g id="text_9">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="792.56448" y="64.77408" transform="rotate(-0 792.56448 64.77408)">EBOPs (analytic)</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="792.56448" y="77.49756" transform="rotate(-0 792.56448 77.49756)">no accumulator</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="30.599424" y="105.25788" transform="rotate(-0 30.599424 105.25788)">FP32 (vanilla)</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="284.32512" y="105.25788" transform="rotate(-0 284.32512 105.25788)">0.8765</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="410.4" y="105.25788" transform="rotate(-0 410.4 105.25788)">—</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="548.2944" y="105.25788" transform="rotate(-0 548.2944 105.25788)">—</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="670.42944" y="105.25788" transform="rotate(-0 670.42944 105.25788)">—</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="792.56448" y="105.25788" transform="rotate(-0 792.56448 105.25788)">64.95 G</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="30.599424" y="141.11496" transform="rotate(-0 30.599424 141.11496)">W8A8</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="284.32512" y="141.11496" transform="rotate(-0 284.32512 141.11496)">0.8642</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="410.4" y="141.11496" transform="rotate(-0 410.4 141.11496)">—</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="548.2944" y="141.11496" transform="rotate(-0 548.2944 141.11496)">—</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="670.42944" y="141.11496" transform="rotate(-0 670.42944 141.11496)">—</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="792.56448" y="141.11496" transform="rotate(-0 792.56448 141.11496)">4.06 G</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="30.599424" y="176.97204" transform="rotate(-0 30.599424 176.97204)">W1A8  (binary, 8-bit act)</text>
+   </g>
+   <g id="text_24">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="284.32512" y="176.97204" transform="rotate(-0 284.32512 176.97204)">0.8551</text>
+   </g>
+   <g id="text_25">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="410.4" y="176.97204" transform="rotate(-0 410.4 176.97204)">0.8493</text>
+   </g>
+   <g id="text_26">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="548.2944" y="176.97204" transform="rotate(-0 548.2944 176.97204)">-0.0058</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="670.42944" y="176.97204" transform="rotate(-0 670.42944 176.97204)">650.4 M</text>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="792.56448" y="176.97204" transform="rotate(-0 792.56448 176.97204)">530.4 M</text>
+   </g>
+   <g id="text_29">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="30.599424" y="212.82912" transform="rotate(-0 30.599424 212.82912)">W1A6  (binary, 6-bit act)</text>
+   </g>
+   <g id="text_30">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="284.32512" y="212.82912" transform="rotate(-0 284.32512 212.82912)">0.8394</text>
+   </g>
+   <g id="text_31">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="410.4" y="212.82912" transform="rotate(-0 410.4 212.82912)">0.8222</text>
+   </g>
+   <g id="text_32">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="548.2944" y="212.82912" transform="rotate(-0 548.2944 212.82912)">-0.0173</text>
+   </g>
+   <g id="text_33">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="670.42944" y="212.82912" transform="rotate(-0 670.42944 212.82912)">501.2 M</text>
+   </g>
+   <g id="text_34">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="792.56448" y="212.82912" transform="rotate(-0 792.56448 212.82912)">392.9 M</text>
+   </g>
+   <g id="text_35">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="30.599424" y="248.6862" transform="rotate(-0 30.599424 248.6862)">W1A4  (binary, 4-bit act)</text>
+   </g>
+   <g id="text_36">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="284.32512" y="248.6862" transform="rotate(-0 284.32512 248.6862)">0.7346</text>
+   </g>
+   <g id="text_37">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="410.4" y="248.6862" transform="rotate(-0 410.4 248.6862)">0.7115</text>
+   </g>
+   <g id="text_38">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="548.2944" y="248.6862" transform="rotate(-0 548.2944 248.6862)">-0.0231</text>
+   </g>
+   <g id="text_39">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="670.42944" y="248.6862" transform="rotate(-0 670.42944 248.6862)">352.2 M</text>
+   </g>
+   <g id="text_40">
+    <text style="font-size: 10.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="792.56448" y="248.6862" transform="rotate(-0 792.56448 248.6862)">258.6 M</text>
+   </g>
+   <g id="text_41">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="16.416" y="20.2672" transform="rotate(-0 16.416 20.2672)">Tagging efficiency vs compute across the activation-quantization axis</text>
+   </g>
+  </g>
+  <g id="text_42">
+   <text style="font-size: 9.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="16.416" y="51.2244" transform="rotate(-0 16.416 51.2244)">Era-2 HLS4ML LHC Jet 5-class · held-out split n = 260,000 · the two EBOPs conventions are separate columns and are never mixed</text>
+  </g>
+  <g id="text_43">
+   <text style="font-size: 8.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="16.416" y="302.3892" transform="rotate(-0 16.416 302.3892)">HGQ2-native EBOPs exist only for the three rebuilt binary models (no HGQ2 build of FP32/W8A8). Within the analytic convention only: W8A8 / W1A8 = 7.65×.</text>
+  </g>
+  <g id="text_44">
+   <text style="font-style: italic; font-size: 8.2px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="16.416" y="316.59984" transform="rotate(-0 16.416 316.59984)">Large model (D256/L8), per-shape/per-probe measurements — provisional; deployable single-model table awaits r6-small</text>
+  </g>
+  <g id="text_45">
+   <text style="font-size: 7.4px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #898781" x="16.416" y="326.51424" transform="rotate(-0 16.416 326.51424)">Sources: roc-results/r5/*.npz · results/hgq2/runs/*/scores.npz · results/hgq2/runs/*/ebops.json · results/ebops.md (re-derived) — poster/VERIFICATION.md §1–§2</text>
+  </g>
+ </g>
+</svg>

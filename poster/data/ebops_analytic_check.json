@@ -1,0 +1,36 @@
+{
+ "wa_macs": 63022336,
+ "aa_macs": 409600,
+ "rows": {
+  "FP32": {
+   "rederived": 64954302464,
+   "claimed_ebops_md": 64954302464,
+   "match": true
+  },
+  "W8A8": {
+   "rederived": 4059643904,
+   "claimed_ebops_md": 4059643904,
+   "match": true
+  },
+  "W1A8": {
+   "rederived": 530393088,
+   "claimed_ebops_md": 530393088,
+   "match": true
+  },
+  "W1A6": {
+   "rederived": 392879616,
+   "claimed_ebops_md": 392879616,
+   "match": true
+  },
+  "W1A4": {
+   "rederived": 258642944,
+   "claimed_ebops_md": 258642944,
+   "match": true
+  }
+ },
+ "ratio_w8a8_over_w1a8": 7.654028673918164,
+ "results_md_2f_w1a8": {
+  "value": 530343936,
+  "matches_ebops_md": false
+ }
+}

@@ -1,0 +1,237 @@
+{
+ "classes_column_order": "g,q,W,Z,t CONFIRMED",
+ "refs": {
+  "A8-lr05-s1": {
+   "recomputed_macro": 0.8551044276000812,
+   "claimed_macro_roc_auc_md": 0.8551,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.8167270751885742,
+    "q": 0.86486559141298,
+    "W": 0.8568276252370943,
+    "Z": 0.8418619405800744,
+    "t": 0.8952399055816829
+   },
+   "meta_macro": 0.8551044276000812,
+   "match_meta_exact": true,
+   "per_class_matches_meta_order_gqWZt": true,
+   "n": 260000
+  },
+  "A8-lr05-s2": {
+   "recomputed_macro": 0.8451632443781782,
+   "claimed_macro_roc_auc_md": 0.8452,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.8044857151193414,
+    "q": 0.8563101666381026,
+    "W": 0.8427958221209617,
+    "Z": 0.8307003741238678,
+    "t": 0.8915241438886186
+   },
+   "meta_macro": 0.8451632443781785,
+   "match_meta_exact": true,
+   "per_class_matches_meta_order_gqWZt": true,
+   "n": 260000
+  },
+  "A6-lr05-s1": {
+   "recomputed_macro": 0.8394342699130457,
+   "claimed_macro_roc_auc_md": 0.8394,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.8048406504454446,
+    "q": 0.8556935860200763,
+    "W": 0.8273586398063592,
+    "Z": 0.8180418196904573,
+    "t": 0.8912366536028913
+   },
+   "meta_macro": 0.8394342699130458,
+   "match_meta_exact": true,
+   "per_class_matches_meta_order_gqWZt": true,
+   "n": 260000
+  },
+  "A6-lr05-s2": {
+   "recomputed_macro": 0.8220073643280592,
+   "claimed_macro_roc_auc_md": 0.822,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.7789626893160911,
+    "q": 0.8418370597605057,
+    "W": 0.8065760359821084,
+    "Z": 0.7978440712887238,
+    "t": 0.8848169652928675
+   },
+   "meta_macro": 0.8220073643280592,
+   "match_meta_exact": true,
+   "per_class_matches_meta_order_gqWZt": true,
+   "n": 260000
+  },
+  "A4-lr05-s1": {
+   "recomputed_macro": 0.7345613060804588,
+   "claimed_macro_roc_auc_md": 0.7346,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.693996008488677,
+    "q": 0.774085719256443,
+    "W": 0.6789422643468559,
+    "Z": 0.6848069822124773,
+    "t": 0.8409755560978408
+   },
+   "meta_macro": 0.7345613060804588,
+   "match_meta_exact": true,
+   "per_class_matches_meta_order_gqWZt": true,
+   "n": 260000
+  },
+  "A4-lr05-s2": {
+   "recomputed_macro": 0.7311562555748182,
+   "claimed_macro_roc_auc_md": 0.7312,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.6911334317337836,
+    "q": 0.7713534487784037,
+    "W": 0.6748656808061085,
+    "Z": 0.6807996932411763,
+    "t": 0.8376290233146186
+   },
+   "meta_macro": 0.7311562555748182,
+   "match_meta_exact": true,
+   "per_class_matches_meta_order_gqWZt": true,
+   "n": 260000
+  },
+  "W8A8-lr05": {
+   "recomputed_macro": 0.8642456221747821,
+   "claimed_macro_roc_auc_md": 0.8642,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.8309924552758208,
+    "q": 0.8699834380392526,
+    "W": 0.8650221166374319,
+    "Z": 0.8500052542627986,
+    "t": 0.9052248466586064
+   },
+   "meta_macro": 0.8642456221747821,
+   "match_meta_exact": true,
+   "per_class_matches_meta_order_gqWZt": true,
+   "n": 260000
+  },
+  "FP32-lr05": {
+   "recomputed_macro": 0.8765137846059741,
+   "claimed_macro_roc_auc_md": 0.8765,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.8449452016629465,
+    "q": 0.875044130492794,
+    "W": 0.8828270959494147,
+    "Z": 0.8643100987724002,
+    "t": 0.9154423961523152
+   },
+   "meta_macro": 0.8765137846059741,
+   "match_meta_exact": true,
+   "per_class_matches_meta_order_gqWZt": true,
+   "n": 260000
+  }
+ },
+ "rebuilds": {
+  "W1A8": {
+   "hash": "b224a8ea",
+   "recomputed_macro": 0.8493283804777958,
+   "claimed_macro_tradeoff_table": 0.8493,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.8135786405610832,
+    "q": 0.8625441602053305,
+    "W": 0.8438932483837734,
+    "Z": 0.8330434630714155,
+    "t": 0.8935823901673764
+   },
+   "npz_meta_auc_macro": 0.8493283804777958,
+   "match_meta_exact": true,
+   "ref_run": "A8-lr05-s1",
+   "ref_recomputed_macro": 0.8551044276000812,
+   "delta_recomputed": -0.00577604712228541,
+   "delta_claimed": -0.0058,
+   "delta_match_4dp": true,
+   "corr_recomputed": 0.9589273835319183,
+   "corr_claimed": 0.9589,
+   "corr_match_4dp": true,
+   "y_identical_to_ref": true,
+   "n": 260000
+  },
+  "W1A6": {
+   "hash": "a428e6e2",
+   "recomputed_macro": 0.8221531599528159,
+   "claimed_macro_tradeoff_table": 0.8222,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.7941910413273288,
+    "q": 0.8480709633957725,
+    "W": 0.7937054163109889,
+    "Z": 0.788217467109188,
+    "t": 0.8865809116208019
+   },
+   "npz_meta_auc_macro": 0.8221531599528159,
+   "match_meta_exact": true,
+   "ref_run": "A6-lr05-s1",
+   "ref_recomputed_macro": 0.8394342699130457,
+   "delta_recomputed": -0.0172811099602298,
+   "delta_claimed": -0.0173,
+   "delta_match_4dp": true,
+   "corr_recomputed": 0.8944355625846069,
+   "corr_claimed": 0.8944,
+   "corr_match_4dp": true,
+   "y_identical_to_ref": true,
+   "n": 260000
+  },
+  "W1A4": {
+   "hash": "53b202bc",
+   "recomputed_macro": 0.7114871985811091,
+   "claimed_macro_tradeoff_table": 0.7115,
+   "match_claimed_4dp": true,
+   "recomputed_per_class": {
+    "g": 0.6727362725574889,
+    "q": 0.7600865867702122,
+    "W": 0.6404595378808493,
+    "Z": 0.6572574313167416,
+    "t": 0.8268961643802533
+   },
+   "npz_meta_auc_macro": 0.7114871985811091,
+   "match_meta_exact": true,
+   "ref_run": "A4-lr05-s1",
+   "ref_recomputed_macro": 0.7345613060804588,
+   "delta_recomputed": -0.023074107499349683,
+   "delta_claimed": -0.0231,
+   "delta_match_4dp": true,
+   "corr_recomputed": 0.6788907695184804,
+   "corr_claimed": 0.6789,
+   "corr_match_4dp": true,
+   "y_identical_to_ref": true,
+   "n": 260000
+  }
+ },
+ "ebops": {
+  "era2-large-w1a8": {
+   "stored_total": 650360941,
+   "sum_per_layer": 650360941,
+   "sum_equals_total": true,
+   "claimed_in_tradeoff_table": 650360941,
+   "matches_claim": true,
+   "n_layers": 93
+  },
+  "era2-large-w1a6": {
+   "stored_total": 501183824,
+   "sum_per_layer": 501183824,
+   "sum_equals_total": true,
+   "claimed_in_tradeoff_table": 501183824,
+   "matches_claim": true,
+   "n_layers": 93
+  },
+  "era2-large-w1a4": {
+   "stored_total": 352214162,
+   "sum_per_layer": 352214162,
+   "sum_equals_total": true,
+   "claimed_in_tradeoff_table": 352214162,
+   "matches_claim": true,
+   "n_layers": 93
+  }
+ },
+ "integrity": {}
+}
