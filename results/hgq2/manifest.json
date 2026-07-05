@@ -81,7 +81,7 @@
    },
    "probe_attn_core": {
     "file": "runs/b224a8ea/probe_attn_core.json",
-    "written": "2026-07-04T04:37:45"
+    "written": "2026-07-05T02:05:41"
    },
    "probe_bitlinear": {
     "file": "runs/b224a8ea/probe_bitlinear.json",

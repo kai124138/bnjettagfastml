@@ -1,0 +1,22 @@
+{
+ "part": "xcvu13p-flga2577-2-e",
+ "top": "myproject",
+ "target_clock_ns": "2.50",
+ "estimated_clock_ns": "1.812",
+ "LUT": 4271510,
+ "FF": 9467557,
+ "DSP": 52000,
+ "BRAM_18K": 720,
+ "URAM": 0,
+ "avail": {
+  "BRAM_18K": 5376,
+  "DSP": 12288,
+  "FF": 3456000,
+  "LUT": 1728000,
+  "URAM": 1280
+ },
+ "LatencyBest": 31,
+ "LatencyWorst": 31,
+ "IntervalMin": 1,
+ "IntervalMax": 1
+}

@@ -2,6 +2,20 @@
 
 Running log of every consequential change in this effort. Dated, newest on top.
 
+## 2026-07-05 — attention core SYNTHESIZED (the historically-excluded piece)
+- **probe_attn_core_rf1** (large-model core: scores QKᵀ → stable table softmax with
+  β_qβ_k/√d in the exp LUT → attn·V; T=10, H=8, E=32; 16-bit input grids, RF=1
+  fully spatial): **synthesized on Vitis 2023.2** — 31 cycles @ II=1, est. 1.81 ns,
+  LUT 4,271,510 (247% VU13P) / FF 9.47M / **DSP 52,000 (423%)** / BRAM 720.
+  Reading: the act×act core converts and synthesizes natively now (EinsumDense
+  blocker closed), and its cost at the spatial extreme quantifies WHY attention is
+  the piece weight-binarization cannot touch — every one of the ~51k act×act products
+  is a real multiplier (no weights to binarize). At 0.65% of the model's MACs it is
+  disproportionately DSP-expensive per MAC.
+- Folded variant probe_attn_core_rf64 (multiplier_limit = total/64) shipped + csynth
+  launched — the deployable-point row. For the SMALL (D32/H4/E8) model the core is
+  8× fewer MACs; folded, trivial.
+
 ## 2026-07-04 (late) — DSP-0 core VERIFIED in csynth on the HGQ2 path; artifact-contamination bug fixed
 - **probe_bitlinear_head_fc2_rf32** (pure ±1 + CSD-2 affine, Strategy=Latency, real
   csynth on mulder): total 194,012 LUT / 116,346 FF / **112 DSP** / 100 cyc / II 32 /
