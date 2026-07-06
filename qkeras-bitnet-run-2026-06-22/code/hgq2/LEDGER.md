@@ -2,6 +2,14 @@
 
 Running log of every consequential change in this effort. Dated, newest on top.
 
+## 2026-07-05 (night) — docs reorganized: current-vs-frozen made explicit
+- Kai flagged that folder naming made it hard to tell what's current. Fixed at the
+  documentation layer (no folder renames — paths are load-bearing in scripts, the cluster
+  ConfigMap, and skills): `00-START-HERE.md` gained a "Finding your way" section with a
+  current-vs-frozen table and a naming decoder (era-1/era-2, rounds r5/r6s, config hashes,
+  probe names); the run README got a dated banner (era-1 table clearly marked, pointers to
+  current code/results); new decoders `code/README.md` and `results/README.md`.
+
 ## 2026-07-05 (evening) — folded attention core SYNTHESIZED (the deployable-point row)
 - **probe_attn_core_rf64** (same core as rf1, multiplier_limit = total/64): 193 cycles
   @ II=64, est. 2.009 ns (0.48 µs at the 2.5 ns target), **DSP 820** — einsums 400 each

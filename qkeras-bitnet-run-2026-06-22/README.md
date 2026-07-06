@@ -1,5 +1,19 @@
 # BitNet Jet Tagger — run 2026-06-22 · directory & table of contents
 
+> **NAMING NOTE (added 2026-07-05).** This folder is named for the June-22 **era-1** run,
+> but it has since grown into the working tree for *all* current code and results. What's
+> current now:
+> - **Pipeline (conversion/verify/EBOPs/synthesis-prep):** `code/hgq2/` — see `code/hgq2/README.md`
+>   and its change ledger `code/hgq2/LEDGER.md`.
+> - **Results store:** `results/hgq2/` (tradeoff table, constraints map, dashboard, per-config runs).
+> - **Training jobs:** `code/jobs/training/variants/kai-bn6s-*.yaml` (round-6-small, fire-ready).
+> - **Decoders:** `code/README.md` (which code is current) · `results/README.md` (which results
+>   are current) · the top-level `00-START-HERE.md` "Finding your way" section (naming decoder).
+>
+> Everything below this banner describes the June-22 era-1 run and is kept as frozen history
+> (old private 2-class data — **not comparable** to any era-2 number). The headline table
+> below is *era-1 validation AUC*; the current era-2 table is `results/hgq2/tradeoff_table.md`.
+
 A **binary `{−1,+1}` 1-bit BitNet transformer** jet tagger for the CMS Level-1 trigger, trained on NRP
 Nautilus and pushed through hls4ml. The thesis: binary weights map to FPGA **LUT/logic instead of DSPs**,
 so we measure (a) tagging efficiency vs full-precision baselines and (b) how far activations can be
@@ -93,7 +107,7 @@ weights in ~1.2% BRAM. DSP=0 is the fold-independent structural win.)*
 │   ├── code_changes.md             ★ ask #2 — exactly what we edited in qkerasModel.py (4 groups)
 │   ├── abstract_and_training.md    ★ ask #3 — the abstract / "did we retrain?" explanation
 │   ├── hls4ml_findings.md          hls4ml convertibility + firmware findings
-│   └── message-to-russell.md       the gradient-flow diagnosis for the upstream author
+│   └── message-to-russell.md       the gradient-flow diagnosis (removed 2026-07-05 by Kai)
 ├── code/                         ← everything runnable
 │   ├── CHANGELOG.md               ← code-change ledger: every file we wrote/edited + the hls4ml bug & fix log
 │   ├── training/

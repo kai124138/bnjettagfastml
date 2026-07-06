@@ -54,11 +54,52 @@ the muscle lives elsewhere:
 
 - **This folder** — code editing, job preparation, analysis, verification, writing. Never
   full training, never synthesis.
-- **NRP Nautilus** — Kubernetes GPU cluster where all training runs. Everything persistent
-  lives on the `kai-data` volume (`/data`). Runbooks: [`nrp/`](nrp/).
+- **NRP Nautilus** — Kubernetes GPU cluster where all training runs. Runbooks: [`nrp/`](nrp/).
+  *(Round-5 used the `kai-data` PVC; from round-6 the jobs are PVC-free — data pulled from
+  Zenodo in-pod, checkpoints and metrics to W&B.)*
 - **mulder** — the group's server with Xilinx Vitis HLS installed. This is the only place
   the model-to-hardware synthesis (csynth) runs, producing the *measured* resource/latency
   numbers. Nautilus has no Xilinx backend — that's why mulder exists in the loop.
+
+---
+
+## Finding your way: what's CURRENT vs. what's FROZEN (as of 2026-07-05)
+
+The folder names accumulated history (the working dir is named after the June-22 run but
+now hosts everything). This table is the shortcut — **"which code do we actually run?"**:
+
+| I want… | Go to | Status |
+| --- | --- | --- |
+| **The training code** (runs on NRP) | `qkeras-bitnet-run-2026-06-22/code/training/qkerasModel.py` — one trainer, all variants via `BN_*` env knobs; shipped to the cluster as ConfigMap `kai-qkerasmodel-r5` | **CURRENT** |
+| **The current job YAMLs** | `…/code/jobs/training/variants/kai-bn6s-*.yaml` + `launch_r6s_staged.sh` (round-6-small, fire-ready). `kai-bn5-*` = round 5 (done). YAMLs in `…/code/jobs/training/` root = era-1, frozen | **CURRENT** |
+| **The conversion / verification / synthesis pipeline** (HGQ2 path, runs locally + mulder) | `…/code/hgq2/` — `run_stage.py` CLI over `configs/*.json`; `probes.py` builds synthesis probes; `fetch_mulder_reports.sh` brings numbers home; `LEDGER.md` is its change trail | **CURRENT** |
+| **The current results** | `…/results/hgq2/` — the structured store (`runs/<config-hash>/`), `tradeoff_table.md`, `constraints_map.md`, `dashboard.html` | **CURRENT** |
+| **The poster** | `poster/` (top level) — FastML26 figures + draft, built against a verified store snapshot with its own gate (`VERIFICATION.md`, `GAPS.md`) | **CURRENT** |
+| Era-1 QKeras-path synthesis scripts | `…/code/hls/` — produced the era-1-shape DSP-0 numbers; superseded for new work by `code/hgq2/` | frozen reference |
+| Era-1 run outputs | `…/results/*.md`, `…/results/csynth/`, `…/results/plots/` (June-22 run) | frozen |
+| ROC arrays | `…/roc-results/*.npz` = era-1 · `…/roc-results/r5/` = era-2 round 5 | data (both eras) |
+
+**Naming decoder** (the vocabulary that trips people up):
+
+- **`qkeras-bitnet-run-2026-06-22/`** — named for the June-22 era-1 run, but it grew into
+  the working tree for *all* code and results. Historical name, current contents. (It was
+  also the git-repo root until 2026-07-05; the repo root is now this top-level folder,
+  pushed to GitHub `kai124138/bnjettagfastml`.)
+- **era 1 / era 2** — before/after the 2026-07-01 dataset migration (private 2-class →
+  public HLS4ML LHC Jet 5-class). Numbers are never compared across eras.
+- **rounds** — r1–r4 = era-1 recipe tuning · **r5** = first era-2 round, *large* arch
+  (D256/H8/L8/FFN1024) · **r6s** = round-6-*small*, the deployable arch (D32/H4/L2/FFN64),
+  fire-ready but not yet launched.
+- **W1A8 / W1A6 / W1A4 / W8A8** — weight bits and activation bits: W1 = binary {−1,+1}.
+- **config hashes** (`b224a8ea`, `a428e6e2`, `53b202bc`) — sha256[:8] of the pipeline
+  configs `code/hgq2/configs/era2-large-w1a{8,6,4}.json`; the results store is keyed by them.
+- **synthesis probes** (in `results/hgq2/runs/<hash>/`, each self-describing via its
+  `csynth_modules.json`): `probe_subln_rf1` = the norm alone, fully parallel ·
+  `probe_bitlinear_rf256` = Resource-strategy dense (the DSP-regression exhibit) ·
+  `probe_bitlinear_v2_rf256` = same at Resource with the ±1/affine split ·
+  `probe_bitlinear_v3lat_rf256` = big-shape Latency attempt (crashed — the negative result) ·
+  `probe_bitlinear_head_fc2_rf32` = the DSP-0 verification (Latency) ·
+  `probe_attn_core_rf1`/`_rf64` = the attention core, spatial / folded.
 
 ---
 
@@ -70,7 +111,8 @@ the muscle lives elsewhere:
 | **`RESEARCH.md`** | **The one living research document**: thesis, data, every verified result, current status, open questions. If you read one file, read that one. |
 | **`ROADMAP.md`** | The steering doc: phased task list with checklists and per-item success indicators. `RESEARCH.md` = what we know; `ROADMAP.md` = what we do next and how we'll know it worked. |
 | `CLAUDE.md` | Working agreement for the AI assistant team (conventions, guardrails). |
-| **`qkeras-bitnet-run-2026-06-22/`** | The working repo (a git repo). `code/training/` model + ROC scripts · `code/hls/` synthesis scripts · `code/jobs/` the run configs (training + HLS job YAMLs — the knobs live here) · `results/` HLS tables & analysis · `roc-results/` the `.npz` ROC arrays every AUC is recomputed from · `methods/` methodology notes · `README.md` the run-level map. |
+| **`qkeras-bitnet-run-2026-06-22/`** | The working tree (historical name — see the decoder above). `code/training/` the trainer + ROC scripts · **`code/hgq2/` the current conversion/verification/synthesis pipeline** · `code/hls/` era-1 synthesis scripts (frozen) · `code/jobs/` job YAMLs (current = `training/variants/kai-bn6s-*`) · **`results/hgq2/` the current results store** · `results/` era-1 HLS tables (frozen) · `roc-results/` the `.npz` ROC arrays · `methods/` methodology notes · `README.md` the run-level map. |
+| **`poster/`** | FastML26 poster deliverables: verified figures, methods/results draft, its own verification gate (`VERIFICATION.md`) and gap list (`GAPS.md`). |
 | `nrp/` | How-to runbooks for the cluster: Nautilus setup, GPU training runbook, mulder↔NRP data transfer. |
 | `reports/` | Frozen deliverables: the June-22 run report, presentation outline + slides + speaker notes (.docx), the strategy review. Historical records — corrected by dated notes, never silently rewritten. |
 | `papers/` | Literature notes (and key PDFs), organized: BitNet/1-bit · hls4ml/FPGA triggers · jet-tagging transformers · quantization foundations. |
