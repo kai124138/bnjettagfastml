@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-07-04T13:10:25.776941</dc:date>
+    <dc:date>2026-07-05T16:20:41.317186</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -48,7 +48,7 @@ L 804.384 151.52508
     <path d="M 17.991936 174.196008 
 " style="fill: none; stroke: #2a78d6; stroke-width: 1.5; stroke-linecap: square"/>
     <defs>
-     <path id="m9cd4aaa4b1" d="M -3.5 3.5 
+     <path id="me1c75ca081" d="M -3.5 3.5 
 L 3.5 3.5 
 L 3.5 -3.5 
 L -3.5 -3.5 
@@ -56,7 +56,7 @@ z
 " style="stroke: #2a78d6; stroke-linejoin: miter"/>
     </defs>
     <g>
-     <use xlink:href="#m9cd4aaa4b1" x="17.991936" y="174.196008" style="fill: #2a78d6; stroke: #2a78d6; stroke-linejoin: miter"/>
+     <use xlink:href="#me1c75ca081" x="17.991936" y="174.196008" style="fill: #2a78d6; stroke: #2a78d6; stroke-linejoin: miter"/>
     </g>
    </g>
    <g id="line2d_5">
@@ -68,7 +68,7 @@ L 804.384 187.38216
     <path d="M 17.991936 210.053088 
 " style="fill: none; stroke: #199e70; stroke-width: 1.5; stroke-linecap: square"/>
     <defs>
-     <path id="m2e97e0b68f" d="M -3.5 3.5 
+     <path id="m090feacf55" d="M -3.5 3.5 
 L 3.5 3.5 
 L 3.5 -3.5 
 L -3.5 -3.5 
@@ -76,7 +76,7 @@ z
 " style="stroke: #199e70; stroke-linejoin: miter"/>
     </defs>
     <g>
-     <use xlink:href="#m2e97e0b68f" x="17.991936" y="210.053088" style="fill: #199e70; stroke: #199e70; stroke-linejoin: miter"/>
+     <use xlink:href="#m090feacf55" x="17.991936" y="210.053088" style="fill: #199e70; stroke: #199e70; stroke-linejoin: miter"/>
     </g>
    </g>
    <g id="line2d_7">
@@ -88,7 +88,7 @@ L 804.384 223.23924
     <path d="M 17.991936 245.910168 
 " style="fill: none; stroke: #e34948; stroke-width: 1.5; stroke-linecap: square"/>
     <defs>
-     <path id="m617c1d5b50" d="M -3.5 3.5 
+     <path id="maf1d5ba937" d="M -3.5 3.5 
 L 3.5 3.5 
 L 3.5 -3.5 
 L -3.5 -3.5 
@@ -96,7 +96,7 @@ z
 " style="stroke: #e34948; stroke-linejoin: miter"/>
     </defs>
     <g>
-     <use xlink:href="#m617c1d5b50" x="17.991936" y="245.910168" style="fill: #e34948; stroke: #e34948; stroke-linejoin: miter"/>
+     <use xlink:href="#maf1d5ba937" x="17.991936" y="245.910168" style="fill: #e34948; stroke: #e34948; stroke-linejoin: miter"/>
     </g>
    </g>
    <g id="text_1">
@@ -224,7 +224,7 @@ z
    </g>
   </g>
   <g id="text_42">
-   <text style="font-size: 9.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="16.416" y="51.2244" transform="rotate(-0 16.416 51.2244)">Era-2 HLS4ML LHC Jet 5-class · held-out split n = 260,000 · the two EBOPs conventions are separate columns and are never mixed</text>
+   <text style="font-size: 9.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="16.416" y="51.2244" transform="rotate(-0 16.416 51.2244)">Era-2 HLS4ML LHC Jet 5-class · held-out split n = 260,000 · trained refs = seed s1 · the two EBOPs conventions are separate columns, never mixed</text>
   </g>
   <g id="text_43">
    <text style="font-size: 8.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="16.416" y="302.3892" transform="rotate(-0 16.416 302.3892)">HGQ2-native EBOPs exist only for the three rebuilt binary models (no HGQ2 build of FP32/W8A8). Within the analytic convention only: W8A8 / W1A8 = 7.65×.</text>

@@ -14,6 +14,7 @@ directory was treated as read-only; nothing in the results store was modified.
 | `figures/fig4_precision_sweep.{pdf,svg}` | AUC / EBOPs / FFN-block LUT vs activation bits |
 | `scripts/verify_gate.py` | Recomputes all AUCs/Δ/corr from raw npz + EBOPs sums → `data/verification_results.json`, `data/roc_curves.npz` |
 | `scripts/verify_ebops_analytic.py` | Re-derives the analytic EBOPs table from architecture dims → `data/ebops_analytic_check.json` |
+| `scripts/verify_dsp_split.py` | Re-derives the per-function DSP splits from the raw csynth.xml module tables (added 2026-07-05) → `data/dsp_split_check.json` |
 | `scripts/make_figures.py` | Renders all four figures from verified values only (raw source cited per constant) |
 
 Regenerate everything:

@@ -16,14 +16,11 @@
 // hls-fpga-machine-learning insert layer-precision
 typedef ap_fixed<31,15> inp_t;
 typedef ap_fixed<8,3,AP_RND_CONV,AP_SAT,0> subln_t;
-typedef ap_fixed<16,11> bit_block_0_attn_Wo_accum_t;
-typedef ap_fixed<16,11,AP_RND_CONV,AP_SAT,0> bit_block_0_attn_Wo_t;
-typedef ap_fixed<2,2> bit_block_0_attn_Wo_weight_t;
-typedef ap_ufixed<2,32> bit_block_0_attn_Wo_bias_t;
+typedef ap_fixed<19,7> bit_block_0_attn_Wo_accum_t;
+typedef ap_fixed<19,7> result_t;
+typedef ap_fixed<4,-3> bit_block_0_attn_Wo_weight_t;
+typedef ap_fixed<7,1> bit_block_0_attn_Wo_bias_t;
 typedef ap_uint<1> layer4_index;
-typedef ap_fixed<23,7> result_t;
-typedef ap_ufixed<3,-4> bit_block_0_attn_Wo_affine_scale_t;
-typedef ap_fixed<11,-5> bit_block_0_attn_Wo_affine_bias_t;
 
 // hls-fpga-machine-learning insert emulator-defines
 

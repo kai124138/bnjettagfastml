@@ -52,32 +52,32 @@ void collect_trace_output(struct trace_data *c_trace_outputs) {
 // Wrapper of top level function for Python bridge
 void myproject_float(
     float *inp,
-    float *layer6_out
+    float *layer4_out
 ) {
 
     inp_t inp_ap[256];
     nnet::convert_data<float, inp_t, 256>(inp, inp_ap);
 
-    result_t layer6_out_ap[256];
+    result_t layer4_out_ap[256];
 
-    myproject(inp_ap,layer6_out_ap);
+    myproject(inp_ap,layer4_out_ap);
 
-    nnet::convert_data<result_t, float, 256>(layer6_out_ap, layer6_out);
+    nnet::convert_data<result_t, float, 256>(layer4_out_ap, layer4_out);
 }
 
 void myproject_double(
     double *inp,
-    double *layer6_out
+    double *layer4_out
 ) {
 
     inp_t inp_ap[256];
     nnet::convert_data<double, inp_t, 256>(inp, inp_ap);
 
-    result_t layer6_out_ap[256];
+    result_t layer4_out_ap[256];
 
-    myproject(inp_ap,layer6_out_ap);
+    myproject(inp_ap,layer4_out_ap);
 
-    nnet::convert_data<result_t, double, 256>(layer6_out_ap, layer6_out);
+    nnet::convert_data<result_t, double, 256>(layer4_out_ap, layer4_out);
 }
 }
 

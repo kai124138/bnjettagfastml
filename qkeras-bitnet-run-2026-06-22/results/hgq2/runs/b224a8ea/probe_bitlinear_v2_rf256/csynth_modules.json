@@ -1,0 +1,78 @@
+{
+  "source": "/Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/code/hgq2/../../results/hgq2/runs/b224a8ea/probe_bitlinear_v2_rf256/csynth.xml",
+  "top_total": {
+    "BRAM_18K": 16,
+    "DSP": 270,
+    "FF": 135332,
+    "LUT": 222686,
+    "URAM": 0
+  },
+  "modules": [
+    {
+      "module": "subln_1d_ap_fixed_31_15_5_3_0_ap_fixed_8_3_4_0_0_config2_s",
+      "role": "subln",
+      "BRAM_18K": 0,
+      "DSP": 14,
+      "FF": 95650,
+      "LUT": 169376,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "572",
+        "ii": "256"
+      }
+    },
+    {
+      "module": "subln_ap_fixed_31_15_5_3_0_ap_fixed_8_3_4_0_0_config2_s",
+      "role": "subln",
+      "BRAM_18K": 0,
+      "DSP": 14,
+      "FF": 98272,
+      "LUT": 174393,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "572",
+        "ii": "572"
+      }
+    },
+    {
+      "module": "dense_resource_rf_leq_nin_ap_fixed_ap_fixed_16_11_4_0_0_config4_s",
+      "role": "dense",
+      "BRAM_18K": 16,
+      "DSP": 256,
+      "FF": 12900,
+      "LUT": 15304,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "260",
+        "ii": "256"
+      }
+    },
+    {
+      "module": "normalize_ap_fixed_16_11_4_0_0_ap_fixed_23_7_5_3_0_config6_s",
+      "role": "affine",
+      "BRAM_18K": 0,
+      "DSP": 0,
+      "FF": 9312,
+      "LUT": 16595,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "1",
+        "ii": "2"
+      }
+    },
+    {
+      "module": "myproject",
+      "role": "other",
+      "BRAM_18K": 16,
+      "DSP": 270,
+      "FF": 135332,
+      "LUT": 222686,
+      "URAM": 0,
+      "latency": {
+        "worst_cycles": "835",
+        "ii": "573"
+      }
+    }
+  ],
+  "note": "per-Module (per-function) synthesis table from ModuleInformation; top_total is the whole-probe AreaEstimates. Instances of the same module share one entry (Vitis reports unique modules)."
+}

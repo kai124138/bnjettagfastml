@@ -64,13 +64,16 @@ EBOPS_ANALYTIC = {"FP32": 64_954_302_464, "W8A8": 4_059_643_904,
 FFN = {"8": dict(LUT=440_882, DSP=0), "6": dict(LUT=429_098, DSP=0), "4": dict(LUT=415_259, DSP=0)}
 VU13P_LUT = 1_728_000; VU13P_DSP = 12_288
 # Whole-probe csynth totals, HGQ2 path — raw results/hgq2/runs/b224a8ea/*/csynth_report.json
-PROBES = [  # (label line, detail line, DSP, color)
-    ("Binary FFN block — A8",  "fc1 256-1024, ReLU, fc2 · no norm · RF=256", 0,    C_A8),
-    ("Binary FFN block — A6",  "same block, 6-bit activations",              0,    C_A6),
-    ("Binary FFN block — A4",  "same block, 4-bit activations",              0,    C_A4),
-    ("SubLN + binary dense + affine", "whole chain · folded, Latency RF=32", 112,  C_NORM),
-    ("SubLN + binary dense + affine", "Resource RF=256 — the ROM trap",      270,  C_NORM),
-    ("SubLN alone, fully parallel",   "single-layer probe · II=1, dim 256",  1792, C_NORM),
+PROBES = [  # (label line, detail line, DSP, color, per-function annotation)
+    # per-function splits raw-verified from csynth.xml module tables (VERIFICATION.md §5)
+    ("Binary FFN block — A8",  "fc1 256-1024, ReLU, fc2 · no norm · RF=256 · era-1-shape build", 0, C_A8, None),
+    ("Binary FFN block — A6",  "same block, 6-bit activations",              0,    C_A6,   None),
+    ("Binary FFN block — A4",  "same block, 4-bit activations",              0,    C_A4,   None),
+    ("SubLN + binary dense (256-5) + affine", "whole chain · Latency, RF=32", 112,  C_NORM,
+     "all 112 in SubLN · dense 0 · affine 0"),
+    ("SubLN + binary dense (256-256, v3)", "beta in weights · Resource RF=256 — ROM trap", 270, C_NORM,
+     "= dense 256 + SubLN 14 (different build, not a strategy flip)"),
+    ("SubLN alone, fully unrolled",   "single-layer probe · II=1, dim 256",  1792, C_NORM, None),
 ]
 
 CLASSES = ["g", "q", "W", "Z", "t"]
@@ -112,8 +115,8 @@ def fig_tradeoff():
     ax = fig.add_axes([0.02, 0.16, 0.96, 0.70]); ax.axis("off")
     ax.set_title("Tagging efficiency vs compute across the activation-quantization axis",
                  loc="left", pad=26, fontsize=14)
-    fig.text(0.02, 0.845, "Era-2 HLS4ML LHC Jet 5-class · held-out split n = 260,000 · "
-             "the two EBOPs conventions are separate columns and are never mixed",
+    fig.text(0.02, 0.845, "Era-2 HLS4ML LHC Jet 5-class · held-out split n = 260,000 · trained refs = seed s1 · "
+             "the two EBOPs conventions are separate columns, never mixed",
              fontsize=9.5, color=SEC)
     xs = [0.00, 0.25, 0.41, 0.585, 0.74, 0.895]
     y0, dy = 0.86, 0.155
@@ -175,7 +178,7 @@ def fig_roc():
     fig.suptitle("Per-class ROC — HGQ2 rebuild vs trained vs FP32 (era-2, n = 260,000)",
                  x=0.065, ha="left", fontsize=14, weight="bold", color=INK)
     fig.text(0.065, 0.895, "Signal efficiency vs mistag rate, mistag on log axis · "
-             "solid = trained QKeras · dashed = binary-pinned HGQ2 rebuild",
+             "solid = trained QKeras (seed s1) · dashed = binary-pinned HGQ2 rebuild",
              fontsize=9.5, color=SEC)
     for k, cls in enumerate(CLASSES):
         ax = axes.flat[k]
@@ -215,26 +218,35 @@ def fig_dsp():
         else:
             ax.barh(y, v, height=0.55, color=c, edgecolor="none")
             ax.text(v + 18, y, f"{v:,}", va="center", fontsize=11, weight="bold", color=INK)
+            if p[4]:
+                ax.text(v + 115, y, p[4], va="center", fontsize=8.2, color=SEC)
         ax.text(-30, y + 0.14, p[0], ha="right", va="center", fontsize=9.8, color=INK)
         ax.text(-30, y - 0.20, p[1], ha="right", va="center", fontsize=7.6, color=MUT)
     ax.set_yticks([])
     ax.set_xlim(0, 1900); ax.set_ylim(min(ypos) - 0.7, max(ypos) + 0.75)
     ax.set_xlabel("DSP48 slices used (whole csynth probe, VU13P, Vitis HLS 2023.2)")
     ax.grid(True, axis="x")
-    fig.suptitle("Every measured DSP appears only when the norm is in the probe",
+    fig.suptitle("Norm-free binary matmul probes synthesize to exactly 0 DSP",
                  x=0.035, y=0.965, ha="left", fontsize=14, weight="bold", color=INK)
-    fig.text(0.035, 0.905, "Whole-probe csynth totals — no per-function attribution needed: "
-             "norm-free binary probes synthesize to exactly 0.", fontsize=9.5, color=SEC)
+    fig.text(0.035, 0.905, "Whole-probe csynth totals, with per-function splits from the raw "
+             "per-instance module tables — in the SubLN-bearing chains, the norm carries the DSPs.",
+             fontsize=9.5, color=SEC)
     # group captions inside the plot, over each group
     ax.text(30, ypos[0] + 0.62, "norm-free binary probes", fontsize=9.6, weight="bold", color=SEC)
     ax.text(30, ypos[3] + 0.62, "SubLN-bearing probes", fontsize=9.6, weight="bold", color=C_NORM)
-    ax.text(900, ypos[1] + 0.35, f"VU13P total: {VU13P_DSP:,} DSP — even the fully-parallel\n"
-            "SubLN uses 14.6%; the binary cores use none.\n"
+    ax.text(900, ypos[1] + 0.45, f"VU13P total: {VU13P_DSP:,} DSP — even the fully-unrolled\n"
+            "SubLN uses 14.6%; binary matmuls with compile-time-\n"
+            "constant weights use none (folded chain: dense 0 DSP /\n"
+            "23,788 LUT · CSD-2 affine 0 DSP / 285 LUT).\n"
             "Per-shape probe DSP is identical at A8/A6/A4\n"
-            "(activation-precision-independent).",
+            "(activation-precision-independent).\n\n"
+            "Context — the weightless attention act×act core\n"
+            "(nothing to binarize, 0.65% of MACs), fully unrolled:\n"
+            "each einsum exactly 1 DSP/MAC (2×25,600 of 52,000 total).",
             fontsize=8.8, color=SEC, va="top", linespacing=1.5)
     footer(fig, "Sources: results/csynth/csynth_report_a{8,6,4}_rf256.json · "
-                "results/hgq2/runs/b224a8ea/probe_*/csynth_report.json + probe firmware — poster/VERIFICATION.md §3",
+                "results/hgq2/runs/b224a8ea/probe_*/{csynth_report.json, csynth.xml module tables} "
+                "+ probe firmware — poster/VERIFICATION.md §3, §5",
            y=0.012)
     save(fig, "fig3_dsp_probes")
 
@@ -287,7 +299,7 @@ def fig_sweep():
     c.set_xticks(xs, ["A8", "A6", "A4"]); c.set_ylim(0, 560)
     c.grid(True, axis="y"); c.set_ylabel("LUT (thousands)")
     c.set_title("Binary FFN block — DSP = 0 at all precisions", loc="left", fontsize=11.5)
-    c.text(0.97, 0.965, "RF=256 · 520 cycles · II 256\nfc1 256-1024, ReLU, fc2 · 400 MHz met",
+    c.text(0.97, 0.965, "RF=256 · 520 cycles · II 256 · 400 MHz met\nQKeras path, era-1-shape build (shape era-identical)",
            fontsize=7.8, color=MUT, ha="right", va="top", transform=c.transAxes)
 
     footer(fig, "Sources: verified AUCs (§1) · ebops.json sums (§2A) · "

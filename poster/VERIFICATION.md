@@ -100,8 +100,8 @@ xcvu13p-flga2577-2-e, Vitis HLS 2023.2 on mulder):
 | — same, A4 | " | **0** | 415,259 | 518–520 | 256 |
 | `probe_subln_rf1` (HGQ2 path, fully parallel II=1) | **SubLN dim-256 only** (sole layer in `myproject.cpp`) | **1,792** | 165,695 | 36 | 1 |
 | `probe_bitlinear_head_fc2_rf32` (HGQ2, Latency, RF=32) | SubLN → binary dense 256→5 → CSD-2 affine | **112** (whole chain) | 194,012 | 100 | 32 |
-| `probe_bitlinear_rf256` (HGQ2, Resource, RF=256) | SubLN → binary dense 256→256 (Wo) → affine | **270** | 196,871 | 832–833 | 573 |
-| `probe_bitlinear_v2_rf256` (same, v2) | " | **270** | 222,686 | 834–835 | 573 |
+| `probe_bitlinear_rf256` (HGQ2, Resource, RF=256) | SubLN + binary dense 256→256 (Wo, in-weight β̃, **no separate affine**) — composition from the csynth.xml module table; the stored firmware is from a *different, later Latency build* (see §6.2) | **270** | 196,871 | 832–833 | 573 |
+| `probe_bitlinear_v2_rf256` (same family, v2) | " | **270** | 222,686 | 834–835 | 573 |
 
 Probe compositions were verified from the raw firmware inside the probe tarballs
 (extracted to scratchpad, store untouched): `probe_subln_rf1/firmware/myproject.cpp`
@@ -157,11 +157,86 @@ Additional raw facts carried into figures:
    either failed (HLS 200-1715, structural) or had not landed. No full-model
    HGQ2-path synthesis number exists; the draft says so explicitly.
 
-## 5. Provenance of every figure number
+## 5. Addendum 2026-07-05 — per-instance raw data landed; two §4 bans lifted
+
+The live session fetched the raw per-instance Vitis reports into the store
+(`results/hgq2/runs/b224a8ea/<probe>/csynth.xml` + parsed `csynth_modules.json`).
+Re-derived here **independently from the csynth.xml module tables** (not the parsed
+JSON, not LEDGER): `poster/scripts/verify_dsp_split.py` →
+`poster/data/dsp_split_check.json`, all checks PASS:
+
+| probe | per-function split (raw, csynth.xml) | verdict |
+|---|---|---|
+| `probe_bitlinear_head_fc2_rf32` (112 total) | SubLN **112** · binary dense **0** (23,788 LUT) · CSD-2 affine **0** (285 LUT) | ✅ un-banned (§4.1) |
+| `probe_bitlinear_rf256` (270 total) | Resource dense **256** (the ROM trap) + SubLN folded **14** = 270 | ✅ un-banned (§4.1) |
+| `probe_subln_rf1` | SubLN **1,792** (single-module) | ✅ (already reconciled) |
+| `probe_attn_core_rf1` (**new**, 52,000 total) | QKᵀ einsum **25,600** + ctx·V einsum **25,600** (= exactly **1 DSP/MAC**, 25,600 MACs each) + softmax **10** + transpose 0; remaining 790 in top-level glue | ✅ new result |
+
+Attention-core totals (raw `probe_attn_core_rf1/csynth_report.json`): **31 cycles,
+II=1, est. clock 1.812 ns; LUT 4,271,510 (247.2% of VU13P), FF 9,467,557 (273.9%),
+DSP 52,000 (423.2%), BRAM 720** — the fully-spatial extreme of the weightless
+act×act core; a folded rf64 variant was still synthesizing on mulder.
+
+Also verified from raw: **n_heads = 8** read from the `model_config` attribute of
+all three era-2 large checkpoints (`models/r5/large-lr05-{s1,a6-s1,a4-s1}`) — the
+draft may say "8-head". **§4 item 1 only is hereby superseded.** Item 2 (the
+QKeras-path §B′ "probe DSP = 100% LayerNorm" per-instance attribution) **stands**:
+the fetched per-instance data covers only the four HGQ2 probes; no per-module
+report exists in the store for any QKeras-path shape probe. Items 3–6 also stand.
+
+## 6. Addendum 2026-07-05 (post adversarial review) — corrections the panel forced
+
+A five-lens adversarial review (28 findings) ran against these deliverables; the
+findings below were verified against raw data and are incorporated in the current
+draft/figures. This section records them so the corrections are not silent.
+
+**6.1 Era provenance of the QKeras-path csynth artifacts (blocker — caught by the
+panel, missed by §3).** The raw census breakdown records shapes `14→256`
+(input_proj) and `256→1` (head_fc2): the per-shape probes, the FFN block, the
+composed census (1,049 DSP / 8,912,618 LUT = 515.8%), and the 23,409-cycle
+composition are **era-1-shape builds** (2026-06-24/26, era-1 checkpoint), not the
+era-2 model (16 features, 5 classes) whose AUC/EBOPs fill the rest of the poster.
+MAC arithmetic confirms the shape identity: F=14/C=1 reproduces the era-1 MAC
+count (63,016,192); F=16/C=5 reproduces the era-2 count (63,022,336). 49/51 layer
+instances (all FFN + attention-projection shapes) are era-identical; input_proj
+and the head differ. Ruling: those numbers stay (the DSP conclusions are
+structural and corroborated on the era-2 HGQ2 probes) but are **labeled
+era-1-shape** in the draft banner, the DSP section era note, fig3/fig4 footnotes,
+and GAPS.md; "the model's entire DSP footprint" phrasing was removed (the census
+also excludes the attention core). The draft's former "6.37 M parameters" (the
+era-1 count) became "≈6.4 M".
+
+**6.2 `probe_bitlinear_rf256` firmware/report build mismatch (major).** The stored
+firmware for that probe is a *Latency*-strategy build (`Strategy: Latency` in
+hls4ml_config.yml, `nnet::DenseLatency` in parameters.h, 2-bit weights + separate
+affine), which cannot produce the `dense_resource_rf_leq_nin_*` module present in
+the stored csynth.xml — the report is from the earlier v3 Resource build (β̃ in
+the weights, no affine layer), the firmware from the later v4. Composition for the
+270-DSP row is therefore taken from the **csynth.xml module table itself**
+(subln 14 + dense_resource 256; self-describing), not from the firmware; §3's row
+was corrected. Consequence for framing: 112-vs-270 is **not** a controlled
+strategy-only comparison (different dense shape 256→5 vs 256→256, different
+factoring, different RF) — the draft and fig3 now say so. Flagged to the live
+session in GAPS.md.
+
+**6.3 Scope and wording corrections.** "Entire DSP footprint" → dense+norm stack
+only, attention core excluded and separately measured (52,000 DSP fully unrolled).
+Fig3's title no longer universally quantifies ("norm-free binary probes = 0 DSP"
+is the claim). The composed 23,409-cycle bound now carries its timing caveat (the
+input_proj stage closed at 3.71 ns > 2.5 ns target). "Fully-spatial" is no longer
+used for two different operating points — the composition is described as
+one-instance-per-layer with internal RF=256 folding; only the II=1 probes are
+called fully unrolled. CSD-2 max error restated as ≈4.5% (panel recomputation:
+4.52%). The trained-reference **seed convention (s1)** is now disclosed in the
+draft and figures, with s2 values and the observation that A6 seed spread (1.7
+pts) is as large as the quoted A8→A6 step. "Knee at A6" softened to what three
+sampled precisions support.
+
+## 7. Provenance of every figure number
 
 | figure | numbers | raw source |
 |---|---|---|
 | Tradeoff table | 8 AUCs, 3 Δ, 3 native EBOPs, 5 analytic EBOPs | §1 npz recompute; §2 ebops.json sums + architecture re-derivation |
 | ROC overlay | per-class curves + AUCs for FP32, W8A8, A8/A6/A4-s1, 3 rebuilds | `poster/data/roc_curves.npz`, computed from the same raw npz in §1 |
-| DSP figure | 0/0/0, 112, 270, 1,792 whole-probe DSPs; 12,288 avail; per-shape DSP×precision | §3 csynth_report.json totals + firmware composition proof |
+| DSP figure | 0/0/0, 112, 270, 1,792 whole-probe DSPs; per-function splits (112=SubLN, 270=256+14); 12,288 avail; per-shape DSP×precision | §3 csynth_report.json totals + firmware composition proof + §5 csynth.xml module tables |
 | Sweep | AUC vs bits (trained+rebuild), native EBOPs vs bits, FFN-block LUT vs bits | §1, §2A, §3 raw JSONs |

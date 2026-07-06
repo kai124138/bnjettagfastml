@@ -1,5 +1,5 @@
 {
-  "source": "results/hgq2/runs/b224a8ea/probe_bitlinear_rf256/csynth.xml",
+  "source": "/Users/kaiyamaguchi/Downloads/bnjettag-training-results/qkeras-bitnet-run-2026-06-22/code/hgq2/../../results/hgq2/runs/b224a8ea/probe_bitlinear_rf256/csynth.xml",
   "top_total": {
     "BRAM_18K": 32,
     "DSP": 270,

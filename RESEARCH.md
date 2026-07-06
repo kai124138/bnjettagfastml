@@ -303,7 +303,12 @@ identified fix, not more calibration.
   not the nonlinearity, are the entire cost. This *quantifies* the §3/ebops
   statement that attention is the piece weight-binarization cannot touch: 0.65% of the
   model's MACs, disproportionately expensive per MAC, and necessarily folded in any real
-  deployment (an RF=64 folded csynth is in flight; the small-model core is 8× smaller).
+  deployment. **The RF=64 folded variant is also now synthesized**: 193 cycles @ II=64
+  (0.48 µs at the 2.5 ns target, est. 2.01 ns), **DSP 820** (each einsum 400 = 25,600/64,
+  softmax 10) — but LUT only drops 1.7× to 2.57M (148% VU13P), ~1.2–1.35M per einsum:
+  folding converts multiplier cost into operand-routing muxes, so the large-model core
+  alone still exceeds the device even folded. Deploying attention at this d_model needs
+  either the 8×-smaller small-model core or io_stream-style reuse, not just RF.
 - **Big-shape Latency-strategy synthesis is a hard wall (negative result, 3× confirmed):**
   Vitis 2023.2 crashes (`HLS 200-1715`) after ~4 h elaborating a fully-unrolled 65k-MAC
   dense at A8, A6, and A4 alike. Deployable big shapes stay on Resource strategy — where

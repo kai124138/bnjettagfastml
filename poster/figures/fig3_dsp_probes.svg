@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-07-04T13:10:26.161251</dc:date>
+    <dc:date>2026-07-05T16:20:41.720473</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -43,7 +43,7 @@ L 278.17344 264.81287
 L 278.17344 244.840696 
 L 246.24 244.840696 
 z
-" clip-path="url(#p8850bf0f25)" style="fill: #4a3aa7"/>
+" clip-path="url(#p1c4667becf)" style="fill: #4a3aa7"/>
    </g>
    <g id="patch_4">
     <path d="M 246.24 301.125913 
@@ -51,7 +51,7 @@ L 323.2224 301.125913
 L 323.2224 281.153739 
 L 246.24 281.153739 
 z
-" clip-path="url(#p8850bf0f25)" style="fill: #4a3aa7"/>
+" clip-path="url(#p1c4667becf)" style="fill: #4a3aa7"/>
    </g>
    <g id="patch_5">
     <path d="M 246.24 337.438957 
@@ -59,23 +59,23 @@ L 757.17504 337.438957
 L 757.17504 317.466783 
 L 246.24 317.466783 
 z
-" clip-path="url(#p8850bf0f25)" style="fill: #4a3aa7"/>
+" clip-path="url(#p1c4667becf)" style="fill: #4a3aa7"/>
    </g>
    <g id="matplotlib.axis_1">
     <g id="xtick_1">
      <g id="line2d_1">
       <path d="M 246.24 352.872 
 L 246.24 102.312 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_2">
       <defs>
-       <path id="mcb72ca41c1" d="M 0 0 
+       <path id="m8866727daa" d="M 0 0 
 L 0 3.5 
 " style="stroke: #898781; stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#mcb72ca41c1" x="246.24" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
+       <use xlink:href="#m8866727daa" x="246.24" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_1">
@@ -86,11 +86,11 @@ L 0 3.5
      <g id="line2d_3">
       <path d="M 317.52 352.872 
 L 317.52 102.312 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_4">
       <g>
-       <use xlink:href="#mcb72ca41c1" x="317.52" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
+       <use xlink:href="#m8866727daa" x="317.52" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_2">
@@ -101,11 +101,11 @@ L 317.52 102.312
      <g id="line2d_5">
       <path d="M 388.8 352.872 
 L 388.8 102.312 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_6">
       <g>
-       <use xlink:href="#mcb72ca41c1" x="388.8" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
+       <use xlink:href="#m8866727daa" x="388.8" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_3">
@@ -116,11 +116,11 @@ L 388.8 102.312
      <g id="line2d_7">
       <path d="M 460.08 352.872 
 L 460.08 102.312 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_8">
       <g>
-       <use xlink:href="#mcb72ca41c1" x="460.08" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
+       <use xlink:href="#m8866727daa" x="460.08" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_4">
@@ -131,11 +131,11 @@ L 460.08 102.312
      <g id="line2d_9">
       <path d="M 531.36 352.872 
 L 531.36 102.312 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_10">
       <g>
-       <use xlink:href="#mcb72ca41c1" x="531.36" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
+       <use xlink:href="#m8866727daa" x="531.36" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_5">
@@ -146,11 +146,11 @@ L 531.36 102.312
      <g id="line2d_11">
       <path d="M 602.64 352.872 
 L 602.64 102.312 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_12">
       <g>
-       <use xlink:href="#mcb72ca41c1" x="602.64" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
+       <use xlink:href="#m8866727daa" x="602.64" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_6">
@@ -161,11 +161,11 @@ L 602.64 102.312
      <g id="line2d_13">
       <path d="M 673.92 352.872 
 L 673.92 102.312 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_14">
       <g>
-       <use xlink:href="#mcb72ca41c1" x="673.92" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
+       <use xlink:href="#m8866727daa" x="673.92" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_7">
@@ -176,11 +176,11 @@ L 673.92 102.312
      <g id="line2d_15">
       <path d="M 745.2 352.872 
 L 745.2 102.312 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e1e0d9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_16">
       <g>
-       <use xlink:href="#mcb72ca41c1" x="745.2" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
+       <use xlink:href="#m8866727daa" x="745.2" y="352.872" style="fill: #898781; stroke: #898781; stroke-width: 0.8"/>
       </g>
      </g>
      <g id="text_8">
@@ -194,38 +194,38 @@ L 745.2 102.312
    <g id="matplotlib.axis_2"/>
    <g id="line2d_17">
     <path d="M 246.24 129.546783 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #2a78d6; stroke-width: 1.5; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #2a78d6; stroke-width: 1.5; stroke-linecap: square"/>
     <defs>
-     <path id="m1d08770c69" d="M 0 8 
+     <path id="m21729632e7" d="M 0 8 
 L 0 -8 
 " style="stroke: #2a78d6; stroke-width: 2.4"/>
     </defs>
-    <g clip-path="url(#p8850bf0f25)">
-     <use xlink:href="#m1d08770c69" x="246.24" y="129.546783" style="fill: #2a78d6; stroke: #2a78d6; stroke-width: 2.4"/>
+    <g clip-path="url(#p1c4667becf)">
+     <use xlink:href="#m21729632e7" x="246.24" y="129.546783" style="fill: #2a78d6; stroke: #2a78d6; stroke-width: 2.4"/>
     </g>
    </g>
    <g id="line2d_18">
     <path d="M 246.24 165.859826 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #199e70; stroke-width: 1.5; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #199e70; stroke-width: 1.5; stroke-linecap: square"/>
     <defs>
-     <path id="me146f6fe10" d="M 0 8 
+     <path id="mba3abaf2bb" d="M 0 8 
 L 0 -8 
 " style="stroke: #199e70; stroke-width: 2.4"/>
     </defs>
-    <g clip-path="url(#p8850bf0f25)">
-     <use xlink:href="#me146f6fe10" x="246.24" y="165.859826" style="fill: #199e70; stroke: #199e70; stroke-width: 2.4"/>
+    <g clip-path="url(#p1c4667becf)">
+     <use xlink:href="#mba3abaf2bb" x="246.24" y="165.859826" style="fill: #199e70; stroke: #199e70; stroke-width: 2.4"/>
     </g>
    </g>
    <g id="line2d_19">
     <path d="M 246.24 202.17287 
-" clip-path="url(#p8850bf0f25)" style="fill: none; stroke: #e34948; stroke-width: 1.5; stroke-linecap: square"/>
+" clip-path="url(#p1c4667becf)" style="fill: none; stroke: #e34948; stroke-width: 1.5; stroke-linecap: square"/>
     <defs>
-     <path id="mf658af4a6a" d="M 0 8 
+     <path id="m61b9b13cee" d="M 0 8 
 L 0 -8 
 " style="stroke: #e34948; stroke-width: 2.4"/>
     </defs>
-    <g clip-path="url(#p8850bf0f25)">
-     <use xlink:href="#mf658af4a6a" x="246.24" y="202.17287" style="fill: #e34948; stroke: #e34948; stroke-width: 2.4"/>
+    <g clip-path="url(#p1c4667becf)">
+     <use xlink:href="#m61b9b13cee" x="246.24" y="202.17287" style="fill: #e34948; stroke: #e34948; stroke-width: 2.4"/>
     </g>
    </g>
    <g id="patch_6">
@@ -245,7 +245,7 @@ L 787.968 352.872
     <text style="font-size: 9.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="237.6864" y="127.087519" transform="rotate(-0 237.6864 127.087519)">Binary FFN block — A8</text>
    </g>
    <g id="text_12">
-    <text style="font-size: 7.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="237.6864" y="139.013688" transform="rotate(-0 237.6864 139.013688)">fc1 256-1024, ReLU, fc2 · no norm · RF=256</text>
+    <text style="font-size: 7.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="237.6864" y="138.867329" transform="rotate(-0 237.6864 138.867329)">fc1 256-1024, ReLU, fc2 · no norm · RF=256 · era-1-shape build</text>
    </g>
    <g id="text_13">
     <text style="font-weight: 700; font-size: 11px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #199e70" x="251.37216" y="169.050256" transform="rotate(-0 251.37216 169.050256)">0 DSP</text>
@@ -269,57 +269,69 @@ L 787.968 352.872
     <text style="font-weight: 700; font-size: 11px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="283.3056" y="258.017212" transform="rotate(-0 283.3056 258.017212)">112</text>
    </g>
    <g id="text_20">
-    <text style="font-size: 9.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="237.6864" y="252.367519" transform="rotate(-0 237.6864 252.367519)">SubLN + binary dense + affine</text>
+    <text style="font-size: 8.2px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="310.96224" y="257.205103" transform="rotate(-0 310.96224 257.205103)">all 112 in SubLN · dense 0 · affine 0</text>
    </g>
    <g id="text_21">
-    <text style="font-size: 7.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="237.6864" y="264.124766" transform="rotate(-0 237.6864 264.124766)">whole chain · folded, Latency RF=32</text>
+    <text style="font-size: 9.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="237.6864" y="252.367519" transform="rotate(-0 237.6864 252.367519)">SubLN + binary dense (256-5) + affine</text>
    </g>
    <g id="text_22">
-    <text style="font-weight: 700; font-size: 11px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="328.35456" y="294.330256" transform="rotate(-0 328.35456 294.330256)">270</text>
+    <text style="font-size: 7.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="237.6864" y="264.124766" transform="rotate(-0 237.6864 264.124766)">whole chain · Latency, RF=32</text>
    </g>
    <g id="text_23">
-    <text style="font-size: 9.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="237.6864" y="288.680562" transform="rotate(-0 237.6864 288.680562)">SubLN + binary dense + affine</text>
+    <text style="font-weight: 700; font-size: 11px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="328.35456" y="294.330256" transform="rotate(-0 328.35456 294.330256)">270</text>
    </g>
    <g id="text_24">
-    <text style="font-size: 7.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="237.6864" y="300.460372" transform="rotate(-0 237.6864 300.460372)">Resource RF=256 — the ROM trap</text>
+    <text style="font-size: 8.2px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="356.0112" y="293.307701" transform="rotate(-0 356.0112 293.307701)">= dense 256 + SubLN 14 (different build, not a strategy flip)</text>
    </g>
    <g id="text_25">
-    <text style="font-weight: 700; font-size: 11px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="762.3072" y="330.643299" transform="rotate(-0 762.3072 330.643299)">1,792</text>
+    <text style="font-size: 9.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="237.6864" y="288.680562" transform="rotate(-0 237.6864 288.680562)">SubLN + binary dense (256-256, v3)</text>
    </g>
    <g id="text_26">
-    <text style="font-size: 9.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="237.6864" y="324.993606" transform="rotate(-0 237.6864 324.993606)">SubLN alone, fully parallel</text>
+    <text style="font-size: 7.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="237.6864" y="300.411685" transform="rotate(-0 237.6864 300.411685)">beta in weights · Resource RF=256 — ROM trap</text>
    </g>
    <g id="text_27">
-    <text style="font-size: 7.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="237.6864" y="336.724728" transform="rotate(-0 237.6864 336.724728)">single-layer probe · II=1, dim 256</text>
+    <text style="font-weight: 700; font-size: 11px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="762.3072" y="330.643299" transform="rotate(-0 762.3072 330.643299)">1,792</text>
    </g>
    <g id="text_28">
-    <text style="font-weight: 700; font-size: 9.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="254.7936" y="107.032696" transform="rotate(-0 254.7936 107.032696)">norm-free binary probes</text>
+    <text style="font-size: 9.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #0b0b0b" x="237.6864" y="324.993606" transform="rotate(-0 237.6864 324.993606)">SubLN alone, fully unrolled</text>
    </g>
    <g id="text_29">
-    <text style="font-weight: 700; font-size: 9.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #4a3aa7" x="254.7936" y="232.312696" transform="rotate(-0 254.7936 232.312696)">SubLN-bearing probes</text>
+    <text style="font-size: 7.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #898781" x="237.6864" y="336.724728" transform="rotate(-0 237.6864 336.724728)">single-layer probe · II=1, dim 256</text>
    </g>
    <g id="text_30">
-    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 161.520745)">VU13P total: 12,288 DSP — even the fully-parallel</text>
-    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 173.663714)">SubLN uses 14.6%; the binary cores use none.</text>
-    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 185.832808)">Per-shape probe DSP is identical at A8/A6/A4</text>
-    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 197.941401)">(activation-precision-independent).</text>
+    <text style="font-weight: 700; font-size: 9.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="254.7936" y="107.032696" transform="rotate(-0 254.7936 107.032696)">norm-free binary probes</text>
+   </g>
+   <g id="text_31">
+    <text style="font-weight: 700; font-size: 9.6px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #4a3aa7" x="254.7936" y="232.312696" transform="rotate(-0 254.7936 232.312696)">SubLN-bearing probes</text>
+   </g>
+   <g id="text_32">
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 157.889441)">VU13P total: 12,288 DSP — even the fully-unrolled</text>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 170.03241)">SubLN uses 14.6%; binary matmuls with compile-time-</text>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 182.145128)">constant weights use none (folded chain: dense 0 DSP /</text>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 194.363722)">23,788 LUT · CSD-2 affine 0 DSP / 285 LUT).</text>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 206.487441)">Per-shape probe DSP is identical at A8/A6/A4</text>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 218.596035)">(activation-precision-independent).</text>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 228.448253)"/>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 242.859972)">Context — the weightless attention act×act core</text>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 255.002941)">(nothing to binarize, 0.65% of MACs), fully unrolled:</text>
+    <text style="font-size: 8.8px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; fill: #52514e" transform="translate(502.848 267.17616)">each einsum exactly 1 DSP/MAC (2×25,600 of 52,000 total).</text>
    </g>
   </g>
-  <g id="text_31">
-   <text style="font-weight: 700; font-size: 14px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="28.728" y="25.116" transform="rotate(-0 28.728 25.116)">Every measured DSP appears only when the norm is in the probe</text>
-  </g>
-  <g id="text_32">
-   <text style="font-size: 9.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="28.728" y="39.672" transform="rotate(-0 28.728 39.672)">Whole-probe csynth totals — no per-function attribution needed: norm-free binary probes synthesize to exactly 0.</text>
-  </g>
   <g id="text_33">
-   <text style="font-style: italic; font-size: 8.2px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="16.416" y="400.0608" transform="rotate(-0 16.416 400.0608)">Large model (D256/L8), per-shape/per-probe measurements — provisional; deployable single-model table awaits r6-small</text>
+   <text style="font-weight: 700; font-size: 14px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #0b0b0b" x="28.728" y="25.116" transform="rotate(-0 28.728 25.116)">Norm-free binary matmul probes synthesize to exactly 0 DSP</text>
   </g>
   <g id="text_34">
-   <text style="font-size: 7.4px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #898781" x="16.416" y="412.5888" transform="rotate(-0 16.416 412.5888)">Sources: results/csynth/csynth_report_a{8,6,4}_rf256.json · results/hgq2/runs/b224a8ea/probe_*/csynth_report.json + probe firmware — poster/VERIFICATION.md §3</text>
+   <text style="font-size: 9.5px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="28.728" y="39.672" transform="rotate(-0 28.728 39.672)">Whole-probe csynth totals, with per-function splits from the raw per-instance module tables — in the SubLN-bearing chains, the norm carries the DSPs.</text>
+  </g>
+  <g id="text_35">
+   <text style="font-style: italic; font-size: 8.2px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #52514e" x="16.416" y="400.0608" transform="rotate(-0 16.416 400.0608)">Large model (D256/L8), per-shape/per-probe measurements — provisional; deployable single-model table awaits r6-small</text>
+  </g>
+  <g id="text_36">
+   <text style="font-size: 7.4px; font-family: 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #898781" x="16.416" y="412.5888" transform="rotate(-0 16.416 412.5888)">Sources: results/csynth/csynth_report_a{8,6,4}_rf256.json · results/hgq2/runs/b224a8ea/probe_*/{csynth_report.json, csynth.xml module tables} + probe firmware — poster/VERIFICATION.md §3, §5</text>
   </g>
  </g>
  <defs>
-  <clipPath id="p8850bf0f25">
+  <clipPath id="p1c4667becf">
    <rect x="246.24" y="102.312" width="541.728" height="250.56"/>
   </clipPath>
  </defs>

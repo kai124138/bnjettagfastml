@@ -1,0 +1,165 @@
+{
+ "probe_bitlinear_head_fc2_rf32": {
+  "top": {
+   "BRAM_18K": 0,
+   "DSP": 112,
+   "FF": 116346,
+   "LUT": 194012,
+   "URAM": 0
+  },
+  "modules": [
+   {
+    "name": "subln_1d_ap_fixed_31_15_5_3_0_ap_fixed_8_4_4_0_0_config2_s",
+    "BRAM_18K": 0,
+    "DSP": 112,
+    "FF": 99672,
+    "LUT": 169549
+   },
+   {
+    "name": "subln_ap_fixed_31_15_5_3_0_ap_fixed_8_4_4_0_0_config2_s",
+    "BRAM_18K": 0,
+    "DSP": 112,
+    "FF": 99708,
+    "LUT": 169723
+   },
+   {
+    "name": "dense_latency_ap_fixed_8_4_4_0_0_ap_fixed_15_11_4_0_0_config4_s",
+    "FF": 6540,
+    "LUT": 23788,
+    "BRAM_18K": 0,
+    "DSP": 0
+   },
+   {
+    "name": "normalize_ap_fixed_15_11_4_0_0_ap_fixed_24_8_5_3_0_config6_s",
+    "FF": 0,
+    "LUT": 285,
+    "BRAM_18K": 0,
+    "DSP": 0
+   },
+   {
+    "name": "myproject",
+    "BRAM_18K": 0,
+    "DSP": 112,
+    "FF": 116346,
+    "LUT": 194012
+   }
+  ]
+ },
+ "probe_bitlinear_rf256": {
+  "top": {
+   "BRAM_18K": 32,
+   "DSP": 270,
+   "FF": 118597,
+   "LUT": 196871,
+   "URAM": 0
+  },
+  "modules": [
+   {
+    "name": "subln_1d_ap_fixed_31_15_5_3_0_ap_fixed_8_3_4_0_0_config2_s",
+    "BRAM_18K": 0,
+    "DSP": 14,
+    "FF": 95650,
+    "LUT": 169376
+   },
+   {
+    "name": "subln_ap_fixed_31_15_5_3_0_ap_fixed_8_3_4_0_0_config2_s",
+    "BRAM_18K": 0,
+    "DSP": 14,
+    "FF": 98272,
+    "LUT": 174393
+   },
+   {
+    "name": "dense_resource_rf_leq_nin_ap_fixed_ap_fixed_19_7_5_3_0_config4_s",
+    "BRAM_18K": 32,
+    "DSP": 256,
+    "FF": 14949,
+    "LUT": 15304
+   },
+   {
+    "name": "myproject",
+    "BRAM_18K": 32,
+    "DSP": 270,
+    "FF": 118597,
+    "LUT": 196871
+   }
+  ]
+ },
+ "probe_subln_rf1": {
+  "top": {
+   "BRAM_18K": 0,
+   "DSP": 1792,
+   "FF": 151297,
+   "LUT": 165695,
+   "URAM": 0
+  },
+  "modules": [
+   {
+    "name": "subln_1d_ap_fixed_31_15_5_3_0_ap_fixed_18_5_5_3_0_config2_s",
+    "BRAM_18K": 0,
+    "DSP": 1792,
+    "FF": 143286,
+    "LUT": 165651
+   },
+   {
+    "name": "subln_ap_fixed_31_15_5_3_0_ap_fixed_18_5_5_3_0_config2_s",
+    "BRAM_18K": 0,
+    "DSP": 1792,
+    "FF": 143323,
+    "LUT": 165653
+   },
+   {
+    "name": "myproject",
+    "BRAM_18K": 0,
+    "DSP": 1792,
+    "FF": 151297,
+    "LUT": 165695
+   }
+  ]
+ },
+ "probe_attn_core_rf1": {
+  "top": {
+   "BRAM_18K": 720,
+   "DSP": 52000,
+   "FF": 9467557,
+   "LUT": 4271510,
+   "URAM": 0
+  },
+  "modules": [
+   {
+    "name": "einsum_ap_fixed_ap_fixed_16_10_4_0_0_ap_fixed_37_25_5_3_0_config5_s",
+    "DSP": 25600,
+    "FF": 2921121,
+    "LUT": 1049600,
+    "BRAM_18K": 0
+   },
+   {
+    "name": "softmax_stable_ap_fixed_ap_ufixed_23_1_4_0_0_softmax_config6_s",
+    "BRAM_18K": 9,
+    "DSP": 10,
+    "FF": 4425,
+    "LUT": 4558
+   },
+   {
+    "name": "transpose_ap_fixed_ap_fixed_43_15_5_3_0_config10_tpose_out_s",
+    "BRAM_18K": 0,
+    "DSP": 0,
+    "FF": 0,
+    "LUT": 0
+   },
+   {
+    "name": "einsum_ap_ufixed_ap_fixed_ap_fixed_43_15_5_3_0_config10_s",
+    "DSP": 25600,
+    "FF": 5980417,
+    "LUT": 2856960,
+    "BRAM_18K": 0
+   },
+   {
+    "name": "myproject",
+    "BRAM_18K": 720,
+    "DSP": 52000,
+    "FF": 9467557,
+    "LUT": 4271510
+   }
+  ]
+ }
+}

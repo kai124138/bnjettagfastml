@@ -2,6 +2,32 @@
 
 Running log of every consequential change in this effort. Dated, newest on top.
 
+## 2026-07-05 (evening) — folded attention core SYNTHESIZED (the deployable-point row)
+- **probe_attn_core_rf64** (same core as rf1, multiplier_limit = total/64): 193 cycles
+  @ II=64, est. 2.009 ns (0.48 µs at the 2.5 ns target), **DSP 820** — einsums 400 each
+  (exactly 25,600/64), softmax 10, transposes 0. Report + raw csynth.xml + modules json
+  in `runs/b224a8ea/probe_attn_core_rf64/`.
+- **Key reading: folding trades DSP for routing, not for area.** DSP drops 63× vs rf1
+  (52,000 → 820) but LUT only 1.7× (4.27M → 2.57M, still 148% of a VU13P): each folded
+  einsum burns ~1.2–1.35M LUT in operand-routing muxes that stream 25,600 operands
+  through 400 multipliers. The large-model (D256/H8/E32) attention core does not fit
+  the device even folded; the small-model (D32/H4/E8) core is 8× smaller in MACs.
+- Both attention-core operating points (spatial extreme + folded) are now measured —
+  the historically-excluded piece is bounded from both ends.
+- Repo re-rooted at project top level and everything pushed to GitHub
+  (kai124138/bnjettagfastml): top-level docs, poster/, reports/, .claude, nrp runbooks.
+- **Store-consistency repair (poster GAPS.md item 11):** the local
+  `probe_bitlinear_rf256` dir+tarball had been overwritten by the later v3lat Latency
+  build while its csynth.xml was from the earlier Resource build. Mulder's as-built
+  Resource project fetched home → rf256 now a consistent firmware↔report pair
+  (Strategy: Resource, defines.h 34bdc118…). The Latency firmware (byte-identical to
+  mulder's v3lat ship tarball) moved to `probe_bitlinear_v3lat_rf256/` — with NO csynth
+  report, that build crashed. The stale contaminated csynth_report.json inside the old
+  v3lat ship tarball resurfaced on extraction and was deleted a second time.
+- Per-instance re-fetch bonus: `probe_bitlinear_v2_rf256` modules json now in store
+  (dense_resource 256 / SubLN 14 / affine 0 = 270) — the pure-±1+affine chain at
+  Resource, bracketing the strategy comparison gap 11 asked for.
+
 ## 2026-07-05 (later) — per-instance csynth reports in the store; poster gaps 1/2/7 closed
 - A parallel poster session (poster/) froze figures against the store and left a gap
   list (poster/GAPS.md); items addressed to the live session are now closed:

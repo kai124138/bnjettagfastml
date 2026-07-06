@@ -61,10 +61,10 @@ int main(int argc, char **argv) {
             // hls-fpga-machine-learning insert data
       inp_t inp[256];
       nnet::copy_data<float, inp_t, 0, 256>(in, inp);
-      result_t layer6_out[256];
+      result_t layer4_out[256];
 
             // hls-fpga-machine-learning insert top-level-function
-            myproject(inp,layer6_out);
+            myproject(inp,layer4_out);
 
             if (e % CHECKPOINT == 0) {
                 std::cout << "Predictions" << std::endl;
@@ -75,12 +75,12 @@ int main(int argc, char **argv) {
                 std::cout << std::endl;
                 std::cout << "Quantized predictions" << std::endl;
                 // hls-fpga-machine-learning insert quantized
-                nnet::print_result<result_t, 256>(layer6_out, std::cout, true);
+                nnet::print_result<result_t, 256>(layer4_out, std::cout, true);
             }
             e++;
 
             // hls-fpga-machine-learning insert tb-output
-            nnet::print_result<result_t, 256>(layer6_out, fout);
+            nnet::print_result<result_t, 256>(layer4_out, fout);
         }
         fin.close();
         fpr.close();
@@ -91,16 +91,16 @@ int main(int argc, char **argv) {
             // hls-fpga-machine-learning insert zero
             inp_t inp[256];
             nnet::fill_zero<inp_t, 256>(inp);
-            result_t layer6_out[256];
+            result_t layer4_out[256];
 
             // hls-fpga-machine-learning insert top-level-function
-            myproject(inp,layer6_out);
+            myproject(inp,layer4_out);
 
             // hls-fpga-machine-learning insert output
-            nnet::print_result<result_t, 256>(layer6_out, std::cout, true);
+            nnet::print_result<result_t, 256>(layer4_out, std::cout, true);
 
             // hls-fpga-machine-learning insert tb-output
-            nnet::print_result<result_t, 256>(layer6_out, fout);
+            nnet::print_result<result_t, 256>(layer4_out, fout);
         }
     }
 
